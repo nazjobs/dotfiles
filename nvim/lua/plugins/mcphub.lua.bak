@@ -1,0 +1,16 @@
+return {
+  "ravitemer/mcphub.nvim",
+  dependencies = {
+    "nvim-lua/plenary.nvim",
+  },
+  build = "npm install -g @modelcontextprotocol/server-hub",
+  config = function()
+    require("mcphub").setup({
+      config = vim.fn.expand("~/.config/mcphub/servers.json"),
+      log = {
+        level = vim.log.levels.DEBUG,
+        to_file = true,
+      },
+    })
+  end,
+}

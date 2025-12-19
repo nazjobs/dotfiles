@@ -1,0 +1,22 @@
+return {
+  "nomnivore/ollama.nvim",
+  dependencies = {
+    "nvim-lua/plenary.nvim",
+  },
+  -- Only load this if you want a separate Ollama chat besides CodeCompanion
+  -- Otherwise, you can remove this file
+  config = function()
+    require("ollama").setup({
+      model = "deepseek-coder:6.7b-instruct-q4_K_M",
+      url = "http://localhost:11434",
+      -- Don't conflict with CodeCompanion keymaps
+      keymaps = {
+        submit = "<C-Enter>",
+      },
+    })
+
+    -- Optional: Keymaps for Ollama chat (if you want both)
+    vim.keymap.set("n", "<leader>ao", "<cmd>OllamaChat<cr>", { desc = "Ollama Chat" })
+    vim.keymap.set("v", "<leader>ao", ":OllamaChat<cr>", { desc = "Ollama Chat Visual" })
+  end,
+}
