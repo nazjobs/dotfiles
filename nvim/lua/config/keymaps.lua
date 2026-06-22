@@ -14,7 +14,7 @@ vim.api.nvim_create_autocmd("FileType", {
   end,
 })
 
--- AI/CodeCompanion keymaps
-vim.keymap.set({ "n", "v" }, "<leader>ac", "<cmd>CodeCompanion<CR>", { desc = "CodeCompanion Toggle" })
-vim.keymap.set({ "n", "v" }, "<leader>aa", "<cmd>CodeCompanionActions<CR>", { desc = "CodeCompanion Actions" })
-vim.keymap.set("n", "<leader>aC", "<cmd>CodeCompanionChatToggle<CR>", { desc = "CodeCompanion Chat Toggle" })
+-- -- AI/CodeCompanion keymaps
+-- vim.keymap.set({ "n", "v" }, "<leader>ac", "<cmd>CodeCompanion<CR>", { desc = "CodeCompanion Toggle" })
+-- vim.keymap.set({ "n", "v" }, "<leader>aa", "<cmd>CodeCompanionActions<CR>", { desc = "CodeCompanion Actions" })
+-- vim.keymap.set("n", "<leader>aC", "<cmd>CodeCompanionChatToggle<CR>", { desc = "CodeCompanion Chat Toggle" })
