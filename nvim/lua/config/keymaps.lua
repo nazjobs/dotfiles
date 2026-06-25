@@ -40,6 +40,20 @@ vim.keymap.set("n", "<leader>aP", function()
   end)
 end, { desc = "Avante: select named provider" })
 
+-- Toggle mcphub/context7 injection in avante on/off
+vim.keymap.set("n", "<leader>am", function()
+  -- access the module-level variable through a global bridge
+  local ok, avante_config = pcall(require, "avante.config")
+  if not ok then
+    return
+  end
+
+  -- We use a vim global as the bridge since Lua modules are cached
+  vim.g.avante_mcphub_enabled = not (vim.g.avante_mcphub_enabled ~= false)
+  local state = vim.g.avante_mcphub_enabled and "ON" or "OFF"
+  vim.notify("Avante mcphub: " .. state, vim.log.levels.INFO)
+end, { desc = "Avante: toggle mcphub injection" })
+
 -- -- AI/CodeCompanion keymaps
 -- vim.keymap.set({ "n", "v" }, "<leader>ac", "<cmd>CodeCompanion<CR>", { desc = "CodeCompanion Toggle" })
 -- vim.keymap.set({ "n", "v" }, "<leader>aa", "<cmd>CodeCompanionActions<CR>", { desc = "CodeCompanion Actions" })

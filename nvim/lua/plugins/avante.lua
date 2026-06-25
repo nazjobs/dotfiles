@@ -1,3 +1,5 @@
+local _mcphub_enabled = true -- toggle this at runtime
+
 return {
   "yetone/avante.nvim",
   event = "VeryLazy",
@@ -115,6 +117,18 @@ return {
     },
 
     system_prompt = function()
+      local ok_cfg, avante_config = pcall(require, "avante.config")
+      local provider = ok_cfg and avante_config.provider or ""
+
+      -- Small local models: override with minimal prompt to stop tool hallucination
+      if vim.startswith(provider, "ollama_") then
+        return "You are a helpful coding assistant. Reply with plain text and code blocks only. Never output JSON, tool calls, or function calls."
+      end
+
+      -- Cloud models: inject mcphub if toggled on
+      if vim.g.avante_mcphub_enabled == false then
+        return ""
+      end
       local ok, hub_mod = pcall(require, "mcphub")
       if not ok then
         return ""
@@ -123,10 +137,50 @@ return {
       if not hub then
         return ""
       end
-      -- only inject if servers are actually active
       local prompt = hub:get_active_servers_prompt()
       return (prompt and #prompt > 0) and prompt or ""
     end,
+
+    custom_tools = function()
+      -- Never give tools to local models, they can't handle it
+      local ok_cfg, avante_config = pcall(require, "avante.config")
+      local provider = ok_cfg and avante_config.provider or ""
+      if vim.startswith(provider, "ollama_") then
+        return {}
+      end
+
+      if vim.g.avante_mcphub_enabled == false then
+        return {}
+      end
+      local ok, ext = pcall(require, "mcphub.extensions.avante")
+      if not ok then
+        return {}
+      end
+      return ext.get_tools and ext.get_tools() or {}
+    end,
+
+    custom_tools = function()
+      if vim.g.avante_mcphub_enabled == false then
+        return {}
+      end
+      local ok, ext = pcall(require, "mcphub.extensions.avante")
+      if not ok then
+        return {}
+      end
+      return ext.get_tools and ext.get_tools() or {}
+    end,
+
+    custom_tools = function()
+      if not _mcphub_enabled then
+        return {}
+      end -- <-- add this
+      local ok, ext = pcall(require, "mcphub.extensions.avante")
+      if not ok then
+        return {}
+      end
+      return ext.get_tools and ext.get_tools() or {}
+    end,
+
     custom_tools = function()
       local ok, ext = pcall(require, "mcphub.extensions.avante")
       if not ok then
