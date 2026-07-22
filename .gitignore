@@ -2,3 +2,5 @@ viu/.sessions/
 viu/registry.json
 mpv/subtitles/
 nvim/lua/plugins/disabled/
+fish/fish_variables
+fish/secrets.fish
