@@ -5,3 +5,11 @@ nvim/lua/plugins/disabled/
 AGENTS.md
 fish/fish_variables
 fish/secrets.fish
+
+# hypr: runtime-generated state (written back into the symlinked repo)
+hypr/.initial_startup_done
+hypr/hyprland.lua.bak
+hypr/wallpaper_effects/.wallpaper_current
+hypr/wallpaper_effects/.wallpaper_modified
+hypr/wallust/wallust-hyprland.conf
+hypr/Monitor_Profiles/Previous_Profile.conf
