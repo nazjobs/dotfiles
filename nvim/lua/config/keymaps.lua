@@ -18,14 +18,14 @@ vim.api.nvim_create_autocmd("FileType", {
 local avante_providers = {
   "ollama_deepseek",
   "ollama_qwen",
-  "free_qwen_coder",
-  "free_deepseek",
-  "free_nemotron",
+  "free_auto",
   "paid_deepseek_v32",
   "paid_deepseek_r1",
   "paid_minimax",
+  "paid_qwen_coder",
   "gemini_flash25",
   "gemini_flash_lite",
+  "gemini_15_flash",
   "gemini_15_flash8b",
 }
 
