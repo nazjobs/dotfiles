@@ -9,6 +9,8 @@ return {
     "nvim-lua/plenary.nvim",
     "MunifTanjim/nui.nvim",
     "ravitemer/mcphub.nvim",
+    "ColinKennedy/mega.cmdparse",
+    "ColinKennedy/mega.logging",
   },
   opts = {
     provider = "ollama_deepseek",
