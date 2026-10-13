@@ -86,6 +86,7 @@ if [ -z "$ADDR" ] || [ "$ADDR" = "null" ]; then
     hyprctl dispatch movetoworkspacesilent "$CURRENT_WS,address:$ADDR" >/dev/null 2>&1
     hyprctl dispatch pin "address:$ADDR" >/dev/null 2>&1
     hyprctl dispatch focuswindow "address:$ADDR" >/dev/null 2>&1
+    hyprctl dispatch fullscreenstate 0 0 >/dev/null 2>&1
     exit 0
   fi
 fi
@@ -118,4 +119,5 @@ else
   hyprctl dispatch movetoworkspacesilent "$CURRENT_WS,address:$ADDR" >/dev/null 2>&1
   hyprctl dispatch pin "address:$ADDR" >/dev/null 2>&1
   hyprctl dispatch focuswindow "address:$ADDR" >/dev/null 2>&1
+  hyprctl dispatch fullscreenstate 0 0 >/dev/null 2>&1
 fi
