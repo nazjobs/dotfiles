@@ -73,3 +73,49 @@ fish_add_path -m ~/.local/bin
 if status is-interactive; and functions -q fzf_configure_bindings
     fzf_configure_bindings --git_log=ctrl-alt-g --processes=ctrl-alt-t
 end
+
+# ── Git & Developer Abbreviations ──────────────────────────────────────────
+if status is-interactive
+    # Git
+    abbr -a g git
+    abbr -a ga 'git add'
+    abbr -a gaa 'git add -A'
+    abbr -a gap 'git add -p'
+    abbr -a gst 'git status'
+    abbr -a gc 'git commit -m'
+    abbr -a gca 'git commit -a -m'
+    abbr -a gco 'git checkout'
+    abbr -a gcb 'git checkout -b'
+    abbr -a gsw 'git switch'
+    abbr -a gb 'git branch'
+    abbr -a gd 'git diff'
+    abbr -a gdc 'git diff --cached'
+    abbr -a gl 'git log --oneline -n 20'
+    abbr -a glo 'git log --oneline --decorate --graph'
+    abbr -a gp 'git push'
+    abbr -a gpf 'git push --force-with-lease'
+    abbr -a gpl 'git pull'
+    abbr -a grb 'git rebase'
+    abbr -a gsta 'git stash'
+    abbr -a gstp 'git stash pop'
+
+    # Rust
+    abbr -a cr 'cargo run'
+    abbr -a crr 'cargo run --release'
+    abbr -a cb 'cargo build'
+    abbr -a cbr 'cargo build --release'
+    abbr -a cc 'cargo check'
+    abbr -a ct 'cargo test'
+
+    # Vue / Node / Frontend
+    abbr -a pnd 'pnpm dev'
+    abbr -a pnb 'pnpm build'
+    abbr -a pni 'pnpm install'
+    abbr -a pnx 'pnpm dlx'
+    abbr -a nrd 'npm run dev'
+    abbr -a nrb 'npm run build'
+
+    # Dev tools
+    abbr -a lg lazygit
+    abbr -a v nvim
+end
