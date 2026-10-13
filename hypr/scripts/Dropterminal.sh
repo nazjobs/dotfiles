@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # /* ---- 💫 https://github.com/JaKooLit 💫 ---- */  ##
 # Dropdown Terminal Manager for Hyprland
-# Smooth hardware-accelerated special workspace dropdown with strict class targeting.
+# Drops down directly onto the active workspace from the top with background dimming.
 
 DROPTERM_CLASS="kitty-dropterm"
-SPECIAL_WS="special:dropterm"
+STORAGE_WS="special:dropterm"
 DEFAULT_CMD="kitty --class $DROPTERM_CLASS"
 
-# Clean up legacy address file if present
+# Clean up legacy address file
 rm -f /tmp/dropdown_terminal_addr
 
 DEBUG=false
@@ -42,17 +42,21 @@ get_dropterm_addr() {
   hyprctl clients -j | jq -r --arg CLASS "$DROPTERM_CLASS" '.[] | select(.class == $CLASS) | .address' | head -n1
 }
 
-# Function to spawn dropdown terminal into special workspace
-spawn_dropterm() {
-  debug_echo "Spawning $DROPTERM_CLASS using: $TERMINAL_EXEC"
-  hyprctl dispatch exec "[workspace $SPECIAL_WS silent] $TERMINAL_EXEC" >/dev/null 2>&1
+# Function to get dropterm client JSON
+get_dropterm_client() {
+  hyprctl clients -j | jq -c --arg CLASS "$DROPTERM_CLASS" '.[] | select(.class == $CLASS)' | head -n1
+}
 
-  # Wait for window to appear (up to 2 seconds in 50ms intervals)
+# Function to spawn dropterm
+spawn_dropterm() {
+  debug_echo "Spawning $DROPTERM_CLASS"
+  hyprctl dispatch exec "$TERMINAL_EXEC" >/dev/null 2>&1
+
   local addr=""
   for _ in {1..40}; do
     addr=$(get_dropterm_addr)
     if [ -n "$addr" ] && [ "$addr" != "null" ]; then
-      debug_echo "Found window: $addr"
+      debug_echo "Spawned: $addr"
       return 0
     fi
     sleep 0.05
@@ -70,30 +74,48 @@ if [ -z "$ADDR" ] || [ "$ADDR" = "null" ]; then
     exit 1
   fi
   ADDR=$(get_dropterm_addr)
-fi
 
-# If invoked silently (e.g. pre-warmed at boot), exit now
-if [ "$SILENT" = true ]; then
-  debug_echo "Silent init complete"
-  exit 0
-fi
-
-# Multi-monitor support: if focused monitor differs from window monitor, move it
-if [ -n "$ADDR" ]; then
-  focused_mon=$(hyprctl monitors -j | jq -r '.[] | select(.focused == true) | .id' 2>/dev/null)
-  win_mon=$(hyprctl clients -j | jq -r --arg CLASS "$DROPTERM_CLASS" '.[] | select(.class == $CLASS) | .monitor' 2>/dev/null | head -n1)
-  if [ -n "$focused_mon" ] && [ -n "$win_mon" ] && [ "$focused_mon" != "$win_mon" ]; then
-    debug_echo "Moving dropterm to focused monitor $focused_mon"
-    hyprctl dispatch movetoworkspacesilent "$SPECIAL_WS,address:$ADDR" >/dev/null 2>&1
+  # If invoked silently (e.g. boot startup), park it into storage workspace
+  if [ "$SILENT" = true ]; then
+    debug_echo "Parking dropterm into $STORAGE_WS at boot"
+    hyprctl dispatch movetoworkspacesilent "$STORAGE_WS,address:$ADDR" >/dev/null 2>&1
+    exit 0
+  else
+    # Interactively spawned: pin and focus on current workspace
+    CURRENT_WS=$(hyprctl activeworkspace -j | jq -r '.id')
+    hyprctl dispatch movetoworkspacesilent "$CURRENT_WS,address:$ADDR" >/dev/null 2>&1
+    hyprctl dispatch pin "address:$ADDR" >/dev/null 2>&1
+    hyprctl dispatch focuswindow "address:$ADDR" >/dev/null 2>&1
+    exit 0
   fi
 fi
 
-# Toggle the special workspace natively (smooth GPU-accelerated slide animation)
-debug_echo "Toggling $SPECIAL_WS"
-hyprctl dispatch togglespecialworkspace dropterm >/dev/null 2>&1
+# If already running and called silently, ensure it is parked
+if [ "$SILENT" = true ]; then
+  hyprctl dispatch movetoworkspacesilent "$STORAGE_WS,address:$ADDR" >/dev/null 2>&1
+  exit 0
+fi
 
-# Focus the terminal if special workspace is currently active
-active_special=$(hyprctl monitors -j | jq -r '.[] | select(.focused == true) | .specialWorkspace.name' 2>/dev/null)
-if [ "$active_special" = "$SPECIAL_WS" ] && [ -n "$ADDR" ]; then
+# Terminal is running: check its state
+CLIENT=$(get_dropterm_client)
+IS_PINNED=$(echo "$CLIENT" | jq -r '.pinned')
+TERM_WS=$(echo "$CLIENT" | jq -r '.workspace.name')
+FOCUSED_ADDR=$(hyprctl activewindow -j | jq -r '.address')
+CURRENT_WS=$(hyprctl activeworkspace -j | jq -r '.id')
+
+debug_echo "ADDR=$ADDR, PINNED=$IS_PINNED, WS=$TERM_WS, FOCUSED=$FOCUSED_ADDR, CURRENT_WS=$CURRENT_WS"
+
+if [ "$TERM_WS" != "$STORAGE_WS" ]; then
+  # Dropterm is currently visible on screen: HIDE it
+  debug_echo "Hiding dropterm to $STORAGE_WS"
+  if [ "$IS_PINNED" = "true" ]; then
+    hyprctl dispatch pin "address:$ADDR" >/dev/null 2>&1
+  fi
+  hyprctl dispatch movetoworkspacesilent "$STORAGE_WS,address:$ADDR" >/dev/null 2>&1
+else
+  # Dropterm is hidden in storage workspace: SHOW it on the CURRENT workspace
+  debug_echo "Showing dropterm on current workspace $CURRENT_WS"
+  hyprctl dispatch movetoworkspacesilent "$CURRENT_WS,address:$ADDR" >/dev/null 2>&1
+  hyprctl dispatch pin "address:$ADDR" >/dev/null 2>&1
   hyprctl dispatch focuswindow "address:$ADDR" >/dev/null 2>&1
 fi
