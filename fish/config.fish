@@ -57,12 +57,19 @@ function ollama --wraps=ollama
     ollama $argv
 end
 
-# Auto-start ollama on shell init
-if not pgrep -x ollama >/dev/null
-    nohup ollama serve >/tmp/ollama.log 2>&1 &
-    sleep 1
-end
-
 # Custom config for pacman update
 alias update='sudo pacman -Syu'
 alias rateupdate='sudo cachyos-rate-mirrors && sudo pacman -Syu'
+
+# initializes fnm in your shell and enable node version switching when changing directories
+fnm env --use-on-cd | source
+
+# Ensure local bin is at front of path without duplication
+fish_add_path -m ~/.local/bin
+
+# Configure fzf.fish bindings to avoid Hyprland compositor shortcuts:
+# - Ctrl+Alt+L is reserved for screen lock -> remapped git log to Ctrl+Alt+G
+# - Ctrl+Alt+P is reserved for powermenu (wlogout) -> remapped processes to Ctrl+Alt+T
+if status is-interactive; and functions -q fzf_configure_bindings
+    fzf_configure_bindings --git_log=ctrl-alt-g --processes=ctrl-alt-t
+end
