@@ -1,0 +1,7 @@
+[Hotkey]
+# Enumerate when pressing trigger key
+EnumerateWithTriggerKeys=True
+
+[Hotkey/TriggerKeys]
+0=Control+space
+1=Super+Shift+space

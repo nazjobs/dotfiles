@@ -9,6 +9,7 @@ Personal dotfiles for a CachyOS/Hyprland Linux desktop.
 - `mpv/` — MPV player with uosc UI and autosub (requires `subliminal` CLI). Bindings: `b` = download subs, `n` = manual.
 - `viu/` — [Viu](https://github.com/viu-media/Viu) terminal anime browser. `config.ini` is auto-generated; `config.toml` is the manual config. `auth.json` contains AniList token. Both `.sessions/` and `registry.json` are gitignored.
 - `fish/` — Fish shell config. Mirrors `~/.config/fish/`. API keys live in `secrets.fish` (gitignored) sourced from `config.fish`. `fish_variables` (auto-generated) is also gitignored.
+- `fcitx5/` — Fcitx5 input method configuration and custom `am-sera.mim` m17n layout for phonetic Amharic typing. Mirrors/symlinks `~/.config/fcitx5/`.
 
 ## Code style
 
