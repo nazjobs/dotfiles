@@ -1,15 +1,23 @@
 [Groups/0]
+# Group Name
 Name=Default
+# Layout
 Default Layout=us
-DefaultIM=keyboard-us
+# Default Input Method
+DefaultIM=m17n_am_sera
 
 [Groups/0/Items/0]
+# Name
 Name=keyboard-us
-Layout=
+# Layout
+# Layout=
 
 [Groups/0/Items/1]
-Name=m17n:am:sera
-Layout=
+# Name
+Name=m17n_am_sera
+# Layout
+# Layout=
 
 [GroupOrder]
 0=Default
+

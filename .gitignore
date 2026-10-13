@@ -13,3 +13,6 @@ hypr/wallpaper_effects/.wallpaper_current
 hypr/wallpaper_effects/.wallpaper_modified
 hypr/wallust/wallust-hyprland.conf
 hypr/Monitor_Profiles/Previous_Profile.conf
+
+# fcitx5 runtime state
+fcitx5/conf/
