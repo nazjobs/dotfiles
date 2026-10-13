@@ -15,6 +15,9 @@ get_brightness() {
 get_icon_path() {
   local brightness=$1
   local level=$(((brightness + 19) / 20 * 20)) # Round up to next 20
+  if ((level < 20)); then
+    level=20
+  fi
   if ((level > 100)); then
     level=100
   fi
@@ -34,20 +37,32 @@ send_notification() {
     "Screen" "Brightness: ${brightness}%"
 }
 
-# Change brightness and notify
-change_brightness() {
-  local delta=$1
+# Increase brightness by 5%
+increase_brightness() {
   local current new icon
-
   current=$(get_brightness)
-  new=$((current + delta))
-
-  # Clamp between 1 and 100
-  ((new < 1)) && new=1
+  new=$((current + 5))
   ((new > 100)) && new=100
 
   brightnessctl set "${new}%"
+  icon=$(get_icon_path "$new")
+  send_notification "$new" "$icon"
+}
 
+# Decrease brightness by 5% down to 5%, then by 1% down to 0%
+decrease_brightness() {
+  local current new icon
+  current=$(get_brightness)
+
+  if ((current > 5)); then
+    new=$((current - 5))
+    ((new < 5)) && new=5
+  else
+    new=$((current - 1))
+    ((new < 0)) && new=0
+  fi
+
+  brightnessctl set "${new}%"
   icon=$(get_icon_path "$new")
   send_notification "$new" "$icon"
 }
@@ -58,10 +73,10 @@ case "$1" in
   get_brightness
   ;;
 "--inc")
-  change_brightness "$step"
+  increase_brightness
   ;;
 "--dec")
-  change_brightness "-$step"
+  decrease_brightness
   ;;
 *)
   get_brightness
