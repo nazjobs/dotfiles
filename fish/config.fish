@@ -61,6 +61,9 @@ end
 alias update='sudo pacman -Syu'
 alias rateupdate='sudo cachyos-rate-mirrors && sudo pacman -Syu'
 
+# Custom config for paru update
+alias pudate='sudo pacman -Syu'
+
 # initializes fnm in your shell and enable node version switching when changing directories
 fnm env --use-on-cd | source
 
