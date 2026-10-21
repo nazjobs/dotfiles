@@ -5,11 +5,6 @@ return {
   config = function()
     require("mcphub").setup({
       auto_approve = true,
-      extensions = {
-        avante = {
-          make_slash_commands = true, -- adds /mcp-tool commands in avante
-        },
-      },
     })
   end,
 }
