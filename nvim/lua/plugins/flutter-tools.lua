@@ -1,5 +1,6 @@
 return {
   "nvim-flutter/flutter-tools.nvim",
+  cond = not vim.g.vscode,
   lazy = false,
   dependencies = {
     "nvim-lua/plenary.nvim",

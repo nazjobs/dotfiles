@@ -1,6 +1,7 @@
 return {
   {
     "mistweaverco/kulala.nvim",
+    cond = not vim.g.vscode,
     -- Load before session save/restore so VimLeavePre and SessionLoadPost hooks are registered.
     event = { "SessionLoadPost", "VimLeavePre" },
     keys = {

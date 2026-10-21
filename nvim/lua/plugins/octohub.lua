@@ -1,6 +1,7 @@
 return {
   {
     "2kabhishek/octohub.nvim",
+    cond = not vim.g.vscode,
     cmd = { "Octohub" },
     keys = { "<leader>goo" },
     dependencies = {

@@ -14,6 +14,7 @@ return {
   -- Markdown previewer
   {
     "ellisonleao/glow.nvim",
+    cond = not vim.g.vscode,
     config = function()
       require("glow").setup({})
     end,
