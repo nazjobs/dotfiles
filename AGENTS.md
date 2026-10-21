@@ -22,6 +22,5 @@ Personal dotfiles for a CachyOS/Hyprland Linux desktop.
 
 ## Known rough edges
 
-- `nvim/lua/plugins/avante.lua` has 4 duplicate `custom_tools` definitions — only the last one is effective. Clean it up if editing avante config.
 - `viu/auth.json` contains a live AniList token — avoid committing changes.
 - No CI, no tests, no formatters other than stylua.
