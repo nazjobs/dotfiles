@@ -16,11 +16,23 @@ hl.gesture({
     action = "close",
 })
 
--- 4-finger swipe right toggles float/tile
+-- 4-finger swipe right toggles float/tile (handles tiled, floating, and fullscreen windows)
 hl.gesture({
     fingers = 4,
     direction = "right",
-    action = "float",
+    action = function()
+        local w = hl.get_active_window()
+        if w then
+            if w.fullscreen and w.fullscreen ~= 0 then
+                hl.dispatch(hl.dsp.window.fullscreen())
+                if not w.floating then
+                    hl.dispatch(hl.dsp.window.float({ action = "toggle" }))
+                end
+            else
+                hl.dispatch(hl.dsp.window.float({ action = "toggle" }))
+            end
+        end
+    end,
 })
 
 hl.config({

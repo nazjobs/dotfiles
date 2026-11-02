@@ -150,10 +150,10 @@ hl.bind("XF86AudioStop", hl.dsp.exec_cmd(resolve_cmd("$scriptsDir/MediaCtrl.sh -
 -- bindd = $mainMod SHIFT, S, screenshot (swappy), exec, $scriptsDir/ScreenShot.sh --swappy
 
 -- Resize windows
-hl.bind("SUPER + SHIFT + left", hl.dsp.window.resize({ x = -50, y = 0 }), { desc = "resize left (-50)", repeating = true })
-hl.bind("SUPER + SHIFT + right", hl.dsp.window.resize({ x = 50, y = 0 }), { desc = "resize right (+50)", repeating = true })
-hl.bind("SUPER + SHIFT + up", hl.dsp.window.resize({ x = 0, y = -50 }), { desc = "resize up (-50)", repeating = true })
-hl.bind("SUPER + SHIFT + down", hl.dsp.window.resize({ x = 0, y = 50 }), { desc = "resize down (+50)", repeating = true })
+hl.bind("SUPER + SHIFT + left", hl.dsp.window.resize({ x = -50, y = 0, relative = true }), { desc = "resize left (-50)", repeating = true })
+hl.bind("SUPER + SHIFT + right", hl.dsp.window.resize({ x = 50, y = 0, relative = true }), { desc = "resize right (+50)", repeating = true })
+hl.bind("SUPER + SHIFT + up", hl.dsp.window.resize({ x = 0, y = -50, relative = true }), { desc = "resize up (-50)", repeating = true })
+hl.bind("SUPER + SHIFT + down", hl.dsp.window.resize({ x = 0, y = 50, relative = true }), { desc = "resize down (+50)", repeating = true })
 
 -- Move windows
 hl.bind("SUPER + CTRL + left", hl.dsp.window.move({ direction = "left" }), { desc = "move window left" })
