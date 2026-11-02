@@ -57,7 +57,7 @@ dispatch_move_silent() {
   else
     ws_val="'$ws'"
   fi
-  hyprctl dispatch "hl.dsp.window.move({ workspace = $ws_val, silent = true, window = 'address:$addr' })" >/dev/null 2>&1
+  hyprctl dispatch "hl.dsp.window.move({ workspace = $ws_val, follow = false, window = 'address:$addr' })" >/dev/null 2>&1
 }
 
 dispatch_pin() {
@@ -141,6 +141,11 @@ if [ "$TERM_WS" != "$STORAGE_WS" ]; then
     dispatch_pin "$ADDR"
   fi
   dispatch_move_silent "$STORAGE_WS" "$ADDR"
+  # Dismiss special workspace if it was somehow toggled on screen
+  active_special=$(hyprctl monitors -j | jq -r '.[].specialWorkspace.name | select(. == "special:dropterm")' | head -n1)
+  if [ -n "$active_special" ]; then
+    hyprctl dispatch "hl.dsp.workspace.toggle_special('dropterm')" >/dev/null 2>&1
+  fi
 else
   # Dropterm is hidden in storage workspace: SHOW it on the CURRENT workspace
   debug_echo "Showing dropterm on current workspace $CURRENT_WS"
