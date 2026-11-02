@@ -30,7 +30,7 @@ echo $$ >"$pidfile"
 export SWWW_TRANSITION_FPS=60
 export SWWW_TRANSITION_TYPE=simple
 
-INTERVAL=30
+INTERVAL=1200 # 20 minutes
 
 while true; do
   focused_monitor=$(hyprctl monitors -j 2>/dev/null | jq -r '.[] | select(.focused) | .name' 2>/dev/null || hyprctl monitors | awk '/^Monitor/{name=$2} /focused: yes/{print name}')
