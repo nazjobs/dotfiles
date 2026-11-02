@@ -47,6 +47,11 @@ get_dropterm_client() {
   hyprctl clients -j | jq -c --arg CLASS "$DROPTERM_CLASS" '.[] | select(.class == $CLASS)' | head -n1
 }
 
+# Function to get currently active special workspace (if any)
+get_active_special() {
+  hyprctl monitors -j | jq -r '.[] | select(.focused) | .specialWorkspace.name | select(. != "" and . != "special:dropterm")' 2>/dev/null | head -n1
+}
+
 # Hyprland 0.57+ Lua dispatch helpers
 dispatch_move_silent() {
   local ws="$1"
@@ -109,10 +114,17 @@ if [ -z "$ADDR" ] || [ "$ADDR" = "null" ]; then
     dispatch_move_silent "$STORAGE_WS" "$ADDR"
     exit 0
   else
-    # Interactively spawned: pin and focus on current workspace
-    CURRENT_WS=$(hyprctl activeworkspace -j | jq -r '.id')
+    # Interactively spawned: animate and focus on current workspace
+    ACTIVE_SPECIAL=$(get_active_special)
+    if [ -n "$ACTIVE_SPECIAL" ]; then
+      CURRENT_WS="$ACTIVE_SPECIAL"
+    else
+      CURRENT_WS=$(hyprctl activeworkspace -j | jq -r '.id')
+    fi
     dispatch_move_silent "$CURRENT_WS" "$ADDR"
-    dispatch_pin "$ADDR"
+    if [ -z "$ACTIVE_SPECIAL" ]; then
+      dispatch_pin "$ADDR"
+    fi
     dispatch_focus "$ADDR"
     dispatch_unfullscreen "$ADDR"
     exit 0
@@ -130,27 +142,61 @@ CLIENT=$(get_dropterm_client)
 IS_PINNED=$(echo "$CLIENT" | jq -r '.pinned')
 TERM_WS=$(echo "$CLIENT" | jq -r '.workspace.name')
 FOCUSED_ADDR=$(hyprctl activewindow -j | jq -r '.address')
-CURRENT_WS=$(hyprctl activeworkspace -j | jq -r '.id')
+ACTIVE_SPECIAL=$(get_active_special)
 
-debug_echo "ADDR=$ADDR, PINNED=$IS_PINNED, WS=$TERM_WS, FOCUSED=$FOCUSED_ADDR, CURRENT_WS=$CURRENT_WS"
+AT_X=$(echo "$CLIENT" | jq -r '.at[0] // empty')
+AT_Y=$(echo "$CLIENT" | jq -r '.at[1] // empty')
+HEIGHT=$(echo "$CLIENT" | jq -r '.size[1] // empty')
+
+if [ -z "$AT_X" ] || [ -z "$HEIGHT" ]; then
+  mon_w=$(hyprctl monitors -j | jq -r '.[] | select(.focused) | .width / .scale' | awk '{print int($1)}')
+  AT_X=$(( mon_w * 175 / 1000 ))
+  HEIGHT=550
+  TARGET_Y=30
+else
+  TARGET_Y=${AT_Y:-30}
+  if [ "$TARGET_Y" -lt 0 ]; then
+    TARGET_Y=30
+  fi
+fi
+OFFSCREEN_Y=$(( -HEIGHT - 60 ))
+
+debug_echo "ADDR=$ADDR, PINNED=$IS_PINNED, WS=$TERM_WS, SPECIAL=$ACTIVE_SPECIAL, X=$AT_X, Y=$TARGET_Y"
 
 if [ "$TERM_WS" != "$STORAGE_WS" ]; then
-  # Dropterm is currently visible on screen: HIDE it
-  debug_echo "Hiding dropterm to $STORAGE_WS"
+  # Dropterm is currently visible on screen: HIDE it with slide-up animation
+  debug_echo "Hiding dropterm to $STORAGE_WS with slide-up"
+  hyprctl dispatch "hl.dsp.window.move({ x = $AT_X, y = $OFFSCREEN_Y, window = 'address:$ADDR' })" >/dev/null 2>&1
+  sleep 0.22
   if [ "$IS_PINNED" = "true" ]; then
     dispatch_pin "$ADDR"
   fi
   dispatch_move_silent "$STORAGE_WS" "$ADDR"
-  # Dismiss special workspace if it was somehow toggled on screen
-  active_special=$(hyprctl monitors -j | jq -r '.[].specialWorkspace.name | select(. == "special:dropterm")' | head -n1)
-  if [ -n "$active_special" ]; then
-    hyprctl dispatch "hl.dsp.workspace.toggle_special('dropterm')" >/dev/null 2>&1
+
+  # If user was in a special workspace, ensure it remained active
+  if [ -n "$ACTIVE_SPECIAL" ]; then
+    cur_sp=$(get_active_special)
+    if [ "$cur_sp" != "$ACTIVE_SPECIAL" ]; then
+      hyprctl dispatch "hl.dsp.workspace.toggle_special('${ACTIVE_SPECIAL#special:}')" >/dev/null 2>&1
+    fi
   fi
 else
-  # Dropterm is hidden in storage workspace: SHOW it on the CURRENT workspace
-  debug_echo "Showing dropterm on current workspace $CURRENT_WS"
+  # Dropterm is hidden in storage workspace: SHOW it with slide-down animation
+  if [ -n "$ACTIVE_SPECIAL" ]; then
+    CURRENT_WS="$ACTIVE_SPECIAL"
+  else
+    CURRENT_WS=$(hyprctl activeworkspace -j | jq -r '.id')
+  fi
+
+  debug_echo "Showing dropterm on workspace $CURRENT_WS with slide-down"
+  # Place offscreen above before revealing
+  hyprctl dispatch "hl.dsp.window.move({ x = $AT_X, y = $OFFSCREEN_Y, window = 'address:$ADDR' })" >/dev/null 2>&1
   dispatch_move_silent "$CURRENT_WS" "$ADDR"
-  dispatch_pin "$ADDR"
+  if [ -z "$ACTIVE_SPECIAL" ]; then
+    dispatch_pin "$ADDR"
+  fi
+  # Slide down into view
+  hyprctl dispatch "hl.dsp.window.move({ x = $AT_X, y = $TARGET_Y, window = 'address:$ADDR' })" >/dev/null 2>&1
   dispatch_focus "$ADDR"
   dispatch_unfullscreen "$ADDR"
 fi

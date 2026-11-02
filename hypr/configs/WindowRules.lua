@@ -1099,12 +1099,3 @@ apply_window_rule({
   center = true,
   size = "(monitor_w*0.7) (monitor_h*0.75)",
 })
-
--- Lua-only rule: keep the dropterminal positioned when toggled by keybind.
-apply_window_rule({
-  name = "dropterminal",
-  match = {
-    class = "kitty-dropterm",
-  },
-  float = true,
-})
