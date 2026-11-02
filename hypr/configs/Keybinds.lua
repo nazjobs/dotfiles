@@ -90,7 +90,7 @@ hl.bind("SUPER + CTRL + F12", hl.dsp.workspace.move({ monitor = "d" }), { desc =
 
 
 -- SYSTEM ####
-hl.bind("CTRL + ALT + Delete", hl.dsp.exec_cmd(resolve_cmd("hyprctl dispatch exit 0")), { desc = "exit Hyprland" })
+hl.bind("CTRL + ALT + Delete", hl.dsp.exit(), { desc = "exit Hyprland" })
 hl.bind("SUPER + Q", hl.dsp.window.close(), { desc = "close active window" })
 hl.bind("SUPER + SHIFT + Q", hl.dsp.exec_cmd(resolve_cmd("$scriptsDir/KillActiveProcess.sh")), { desc = "Terminate active process" })
 hl.bind("CTRL + ALT + L", hl.dsp.exec_cmd(resolve_cmd("$scriptsDir/LockScreen.sh")), { desc = "lock screen" })
@@ -112,7 +112,7 @@ hl.bind("SUPER + SHIFT + I", hl.dsp.layout("togglesplit"), { desc = "toggle spli
 hl.bind("SUPER + P", hl.dsp.window.pseudo(), { desc = "toggle pseudo (dwindle)" })
 
 -- Works on either layout (Master or Dwindle)
-hl.bind("SUPER + M", hl.dsp.exec_cmd(resolve_cmd("hyprctl dispatch splitratio 0.3")), { desc = "set split ratio 0.3" })
+hl.bind("SUPER + M", hl.dsp.layout("splitratio 0.3"), { desc = "set split ratio 0.3" })
 -- layout aware keybinds
 hl.on("hyprland.start", function() hl.exec_cmd("" .. scriptsDir .. "/ChangeLayout.sh init") end)
 

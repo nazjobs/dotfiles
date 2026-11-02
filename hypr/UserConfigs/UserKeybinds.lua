@@ -7,9 +7,8 @@ local USER_DEFAULTS = _G.USER_DEFAULTS or {}
 local term = USER_DEFAULTS.term or "alacritty"
 
 -- Common User Keybinds
-hl.bind("SUPER + Return", dsp.exec_cmd(term), { desc = "Opens your preferred terminal emulator (" .. term .. ")" })
+hl.unbind("SUPER + CTRL + Return")
 hl.bind("SUPER + CTRL + Return", dsp.exec_cmd("ghostty"), { desc = "Opens your preferred terminal emulator (ghostty)" })
-hl.bind("SUPER + Q", dsp.window.close(), { desc = "Closes (not kill) current window" })
 hl.bind("SUPER + V", dsp.window.float({ action = "toggle" }), { desc = "Switches current window between floating and tiling mode" })
 hl.bind("SUPER + F", dsp.window.fullscreen(), { desc = "Toggles current window fullscreen mode" })
 hl.bind("SUPER + CTRL + N", dsp.layout("togglesplit"), { desc = "Toggles current window split mode" })
