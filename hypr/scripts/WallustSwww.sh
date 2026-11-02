@@ -124,51 +124,8 @@ if pidof ghostty >/dev/null; then
   for pid in $(pidof ghostty); do kill -SIGUSR2 "$pid" 2>/dev/null || true; done
 fi
 
-# Prompt Waybar to reload colors
-reload_waybar() {
-  if command -v waybar-msg >/dev/null 2>&1; then
-    waybar-msg cmd reload >/dev/null 2>&1 || true
-  elif pidof waybar >/dev/null; then
-    killall -SIGUSR2 waybar 2>/dev/null || true
-  fi
-}
-
-# If the active workspace has a fullscreen window, reloading Waybar now will cause
-# its new layer surface to map on top of the fullscreen application.
-# Therefore, defer the reload until the active workspace is no longer fullscreen.
-is_fullscreen_active() {
-  local has_fs
-  has_fs="$(hyprctl activeworkspace -j 2>/dev/null | jq -r '.hasfullscreen // false' 2>/dev/null)"
-  if [[ "$has_fs" == "true" ]]; then
-    return 0
-  fi
-  local win_fs
-  win_fs="$(hyprctl activewindow -j 2>/dev/null | jq -r '.fullscreen // 0' 2>/dev/null)"
-  if [[ "$win_fs" != "0" && "$win_fs" != "null" && -n "$win_fs" ]]; then
-    return 0
-  fi
-  return 1
-}
-
-pidfile="${XDG_RUNTIME_DIR:-/tmp}/waybar-deferred-reload.pid"
-if [[ -f "$pidfile" ]]; then
-  old_pid=$(cat "$pidfile" 2>/dev/null || true)
-  if [[ -n "$old_pid" ]] && kill -0 "$old_pid" 2>/dev/null; then
-    kill "$old_pid" 2>/dev/null || true
-  fi
-  rm -f "$pidfile"
-fi
-
-if is_fullscreen_active; then
-  (
-    echo $$ > "$pidfile"
-    # Wait until user exits fullscreen or switches to a workspace without fullscreen
-    while is_fullscreen_active; do
-      sleep 1
-    done
-    rm -f "$pidfile"
-    reload_waybar
-  ) >/dev/null 2>&1 & disown
-else
-  reload_waybar
-fi
+# NOTE: Waybar reload is NOT done here.  Every caller that needs Waybar
+# refreshed (WallpaperSelect, WallpaperRandom, DarkLight, GameMode, etc.)
+# already invokes Refresh.sh afterwards, which does a full kill + restart.
+# The auto-change script intentionally skips the restart so Waybar's layer
+# surface is never recreated while a fullscreen window is active.

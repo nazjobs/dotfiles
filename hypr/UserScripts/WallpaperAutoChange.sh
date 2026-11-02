@@ -24,13 +24,12 @@ if [[ -f "$pidfile" ]]; then
     kill "$old_pid" 2>/dev/null || true
   fi
 fi
-echo $$ > "$pidfile"
+echo $$ >"$pidfile"
 
 # Edit below to control the images transition
 export SWWW_TRANSITION_FPS=60
 export SWWW_TRANSITION_TYPE=simple
 
-# This controls (in seconds) when to switch to the next image
 INTERVAL=1800
 
 while true; do
@@ -52,7 +51,8 @@ while true; do
       # Refresh UI components
       pkill rofi 2>/dev/null || true
       if pgrep -x qs >/dev/null 2>&1; then
-        pkill qs && qs -c overview & 2>/dev/null || true
+        pkill qs && qs -c overview &
+        2>/dev/null || true
       fi
       sleep 0.2
       swaync-client --reload-config 2>/dev/null || true
