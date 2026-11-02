@@ -21,7 +21,13 @@ hl.bind("SUPER + V", function()
     end
 end, { desc = "Switches current window between floating and tiling mode" })
 hl.bind("SUPER + F", dsp.window.fullscreen(), { desc = "Toggles current window fullscreen mode" })
-hl.bind("SUPER + CTRL + N", dsp.layout("togglesplit"), { desc = "Toggles current window split mode" })
+hl.bind("SUPER + CTRL + N", function()
+    local w = hl.get_active_window()
+    if w and w.fullscreen and w.fullscreen ~= 0 then
+        hl.dispatch(hl.dsp.window.fullscreen())
+    end
+    hl.dispatch(hl.dsp.layout("togglesplit"))
+end, { desc = "Toggles current window split mode (horizontal <-> vertical)" })
 hl.bind("SUPER + CTRL + K", dsp.exec_cmd("QT_QPA_PLATFORM=xcb krita"), { desc = "Opens Krita in Qt supported mode" })
 hl.bind("Print", dsp.exec_cmd("flameshot gui"))
 hl.bind("SUPER + Y", dsp.exec_cmd("flatpak run com.ayugram.desktop"), { desc = "AyuGram" })

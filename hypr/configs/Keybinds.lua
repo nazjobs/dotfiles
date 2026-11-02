@@ -108,7 +108,13 @@ hl.bind("SUPER + I", hl.dsp.layout("addmaster"), { desc = "add master" })
 hl.bind("SUPER + CTRL + Return", hl.dsp.layout("swapwithmaster"), { desc = "swap with master" })
 
 -- Dwindle Layout
-hl.bind("SUPER + SHIFT + I", hl.dsp.layout("togglesplit"), { desc = "toggle split (dwindle)" })
+hl.bind("SUPER + SHIFT + I", function()
+    local w = hl.get_active_window()
+    if w and w.fullscreen and w.fullscreen ~= 0 then
+        hl.dispatch(hl.dsp.window.fullscreen())
+    end
+    hl.dispatch(hl.dsp.layout("togglesplit"))
+end, { desc = "toggle split (dwindle)" })
 hl.bind("SUPER + P", hl.dsp.window.pseudo(), { desc = "toggle pseudo (dwindle)" })
 
 -- Works on either layout (Master or Dwindle)

@@ -50,9 +50,8 @@ hl.config({
         kb_layout = "us",
     },
     dwindle = {
-        -- Disabling preserve_split ensures that when an app is moved into a workspace
-        -- or closed, windows cleanly divide the screen space equally (50/50) instead of
-        -- getting stuck in old, squished or uneven resize proportions.
-        preserve_split = false,
+        -- preserve_split MUST be true for togglesplit (horizontal <-> vertical) to work
+        preserve_split = true,
+        special_scale_factor = 0.8,
     },
 })
