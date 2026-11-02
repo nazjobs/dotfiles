@@ -77,6 +77,6 @@ hl.bind("ALT" .. " + " .. "F6", hl.dsp.exec_cmd(os.getenv("HOME") .. "/.config/h
 local TOUCHPAD_ENABLED = true
 
 hl.device({
-    name = "$Touchpad_Device",
+    name = Touchpad_Device,
     enabled = true,
 })
