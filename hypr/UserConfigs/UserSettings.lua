@@ -30,6 +30,9 @@ hl.gesture({
 })
 
 hl.config({
+    cursor = {
+        no_hardware_cursors = 0,
+    },
     misc = {
         -- 1: Keeps fullscreen when switching windows / alt-tabbing
         on_focus_under_fullscreen = 1,
