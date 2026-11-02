@@ -76,18 +76,41 @@ hl.config({
 
 hl.config({
     gestures = {
-        gesture = { 3, "horizontal", "workspace" },
         workspace_swipe_distance = 500,
         workspace_swipe_invert = true,
         workspace_swipe_min_speed_to_force = 30,
         workspace_swipe_cancel_ratio = 0.5,
         workspace_swipe_create_new = true,
         workspace_swipe_forever = true,
-        --workspace_swipe_use_r = true #uncomment if wanted a forever create a new workspace with swipe right
-        gesture = { 4, "up", "dispatcher", "exec", "hyprctl keyword cursor:zoom_factor $(hyprctl getoption cursor:zoom_factor | awk 'NR==1 {factor = local_var_2; if (factor < 1) {factor = 1}; print factor * 1.5}')" },
-        gesture = { 4, "down", "dispatcher", "exec", "hyprctl keyword cursor:zoom_factor $(hyprctl getoption cursor:zoom_factor | awk 'NR==1 {factor = local_var_2; if (factor < 1) {factor = 1}; print factor / 1.5}')" },
-        gesture = { 3, "down", "dispatcher", "exec", os.getenv("HOME") .. "/.config/hypr/scripts/OverviewToggle.sh" },
     },
+})
+
+hl.gesture({ fingers = 3, direction = "horizontal", action = "workspace" })
+hl.gesture({
+    fingers = 3,
+    direction = "down",
+    action = function()
+        hl.exec_cmd(os.getenv("HOME") .. "/.config/hypr/scripts/OverviewToggle.sh")
+    end,
+})
+hl.gesture({
+    fingers = 4,
+    direction = "up",
+    action = function()
+        local factor = hl.get_config("cursor.zoom_factor") or hl.get_config("cursor:zoom_factor") or 1.0
+        if factor < 1.0 then factor = 1.0 end
+        hl.config({ cursor = { zoom_factor = factor * 1.5 } })
+    end,
+})
+hl.gesture({
+    fingers = 4,
+    direction = "down",
+    action = function()
+        local factor = hl.get_config("cursor.zoom_factor") or hl.get_config("cursor:zoom_factor") or 1.0
+        local new_factor = factor / 1.5
+        if new_factor < 1.0 then new_factor = 1.0 end
+        hl.config({ cursor = { zoom_factor = new_factor } })
+    end,
 })
 
 hl.config({
