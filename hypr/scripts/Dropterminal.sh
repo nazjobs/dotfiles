@@ -47,10 +47,38 @@ get_dropterm_client() {
   hyprctl clients -j | jq -c --arg CLASS "$DROPTERM_CLASS" '.[] | select(.class == $CLASS)' | head -n1
 }
 
+# Hyprland 0.57+ Lua dispatch helpers
+dispatch_move_silent() {
+  local ws="$1"
+  local addr="$2"
+  local ws_val
+  if [[ "$ws" =~ ^-?[0-9]+$ ]]; then
+    ws_val="$ws"
+  else
+    ws_val="'$ws'"
+  fi
+  hyprctl dispatch "hl.dsp.window.move({ workspace = $ws_val, silent = true, window = 'address:$addr' })" >/dev/null 2>&1
+}
+
+dispatch_pin() {
+  local addr="$1"
+  hyprctl dispatch "hl.dsp.window.pin({ window = 'address:$addr' })" >/dev/null 2>&1
+}
+
+dispatch_focus() {
+  local addr="$1"
+  hyprctl dispatch "hl.dsp.focus({ window = 'address:$addr' })" >/dev/null 2>&1
+}
+
+dispatch_unfullscreen() {
+  local addr="$1"
+  hyprctl dispatch "hl.dsp.window.fullscreen_state({ internal = 0, client = 0, window = 'address:$addr' })" >/dev/null 2>&1
+}
+
 # Function to spawn dropterm
 spawn_dropterm() {
   debug_echo "Spawning $DROPTERM_CLASS"
-  hyprctl dispatch exec "$TERMINAL_EXEC" >/dev/null 2>&1
+  hyprctl dispatch "hl.dsp.exec_cmd('$TERMINAL_EXEC')" >/dev/null 2>&1
 
   local addr=""
   for _ in {1..40}; do
@@ -78,22 +106,22 @@ if [ -z "$ADDR" ] || [ "$ADDR" = "null" ]; then
   # If invoked silently (e.g. boot startup), park it into storage workspace
   if [ "$SILENT" = true ]; then
     debug_echo "Parking dropterm into $STORAGE_WS at boot"
-    hyprctl dispatch movetoworkspacesilent "$STORAGE_WS,address:$ADDR" >/dev/null 2>&1
+    dispatch_move_silent "$STORAGE_WS" "$ADDR"
     exit 0
   else
     # Interactively spawned: pin and focus on current workspace
     CURRENT_WS=$(hyprctl activeworkspace -j | jq -r '.id')
-    hyprctl dispatch movetoworkspacesilent "$CURRENT_WS,address:$ADDR" >/dev/null 2>&1
-    hyprctl dispatch pin "address:$ADDR" >/dev/null 2>&1
-    hyprctl dispatch focuswindow "address:$ADDR" >/dev/null 2>&1
-    hyprctl dispatch fullscreenstate 0 0 >/dev/null 2>&1
+    dispatch_move_silent "$CURRENT_WS" "$ADDR"
+    dispatch_pin "$ADDR"
+    dispatch_focus "$ADDR"
+    dispatch_unfullscreen "$ADDR"
     exit 0
   fi
 fi
 
 # If already running and called silently, ensure it is parked
 if [ "$SILENT" = true ]; then
-  hyprctl dispatch movetoworkspacesilent "$STORAGE_WS,address:$ADDR" >/dev/null 2>&1
+  dispatch_move_silent "$STORAGE_WS" "$ADDR"
   exit 0
 fi
 
@@ -110,14 +138,14 @@ if [ "$TERM_WS" != "$STORAGE_WS" ]; then
   # Dropterm is currently visible on screen: HIDE it
   debug_echo "Hiding dropterm to $STORAGE_WS"
   if [ "$IS_PINNED" = "true" ]; then
-    hyprctl dispatch pin "address:$ADDR" >/dev/null 2>&1
+    dispatch_pin "$ADDR"
   fi
-  hyprctl dispatch movetoworkspacesilent "$STORAGE_WS,address:$ADDR" >/dev/null 2>&1
+  dispatch_move_silent "$STORAGE_WS" "$ADDR"
 else
   # Dropterm is hidden in storage workspace: SHOW it on the CURRENT workspace
   debug_echo "Showing dropterm on current workspace $CURRENT_WS"
-  hyprctl dispatch movetoworkspacesilent "$CURRENT_WS,address:$ADDR" >/dev/null 2>&1
-  hyprctl dispatch pin "address:$ADDR" >/dev/null 2>&1
-  hyprctl dispatch focuswindow "address:$ADDR" >/dev/null 2>&1
-  hyprctl dispatch fullscreenstate 0 0 >/dev/null 2>&1
+  dispatch_move_silent "$CURRENT_WS" "$ADDR"
+  dispatch_pin "$ADDR"
+  dispatch_focus "$ADDR"
+  dispatch_unfullscreen "$ADDR"
 fi
