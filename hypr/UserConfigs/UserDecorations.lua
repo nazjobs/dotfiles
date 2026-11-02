@@ -63,6 +63,9 @@ hl.config({
             special = true,
             popups = true,
         },
+        wobble = {
+            enabled = true,
+        },
     },
     group = {
         col = {
