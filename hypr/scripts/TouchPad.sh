@@ -21,6 +21,15 @@ if [[ -z "$touchpad_device" && -f "$laptops_conf" ]]; then
         }' "$laptops_conf"
     )"
 fi
+if [[ -z "$touchpad_device" && -f "$HOME/.config/hypr/configs/Laptops.lua" ]]; then
+    touchpad_device="$(
+        awk -F= '/local Touchpad_Device/ {
+            gsub(/[";[:space:]]/, "", $2);
+            print $2;
+            exit
+        }' "$HOME/.config/hypr/configs/Laptops.lua"
+    )"
+fi
 
 if [[ -z "$touchpad_device" ]]; then
     notify-send -u low -i "$notif" " Touchpad" " Device name not set (check Laptops.conf)"
@@ -33,13 +42,13 @@ status_file="${XDG_RUNTIME_DIR:-/tmp}/touchpad.status"
 enable_touchpad() {
     printf "true" >"$status_file"
     notify-send -u low -i "$notif" " Enabling" " touchpad"
-    hyprctl keyword "$touchpad_keyword" true -r
+    hyprctl eval "hl.device({ name = '$touchpad_device', enabled = true })" >/dev/null 2>&1 || true
 }
 
 disable_touchpad() {
     printf "false" >"$status_file"
     notify-send -u low -i "$notif" " Disabling" " touchpad"
-    hyprctl keyword "$touchpad_keyword" false -r
+    hyprctl eval "hl.device({ name = '$touchpad_device', enabled = false })" >/dev/null 2>&1 || true
 }
 
 current_state="false"
