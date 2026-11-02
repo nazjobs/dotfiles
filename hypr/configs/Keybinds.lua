@@ -248,5 +248,5 @@ hl.bind("SUPER + period", hl.dsp.focus({ workspace = "e+1" }), { desc = "next wo
 hl.bind("SUPER + comma", hl.dsp.focus({ workspace = "e-1" }), { desc = "previous workspace" })
 
 -- Move/resize windows with mainMod + LMB/RMB and dragging
-hl.bind("SUPER + mouse:272", hl.dsp.window.drag(), { desc = "move window", drag = true })
-hl.bind("SUPER + mouse:273", hl.dsp.window.resize(), { desc = "resize window", drag = true })
+hl.bind("SUPER + mouse:272", hl.dsp.window.drag(), { desc = "move window", mouse = true })
+hl.bind("SUPER + mouse:273", hl.dsp.window.resize(), { desc = "resize window", mouse = true })

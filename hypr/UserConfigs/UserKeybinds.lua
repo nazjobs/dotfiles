@@ -23,7 +23,6 @@ hl.bind("SUPER + SHIFT + period", dsp.exec_cmd("emote"))
 hl.bind("SUPER + SHIFT + space", dsp.exec_cmd("fcitx5-remote -t"))
 
 -- Window Actions (HJKL)
-hl.bind("SUPER + mouse:272", dsp.window.drag(), { drag = true, desc = "Move the window towards a direction" })
 hl.bind("SUPER + SHIFT + H", dsp.window.move({ direction = "left" }), { desc = "Move active window to the left" })
 hl.bind("SUPER + SHIFT + L", dsp.window.move({ direction = "right" }), { desc = "Move active window to the right" })
 hl.bind("SUPER + SHIFT + K", dsp.window.move({ direction = "up" }), { desc = "Move active window upwards" })
