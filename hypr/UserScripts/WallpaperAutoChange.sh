@@ -30,7 +30,7 @@ echo $$ >"$pidfile"
 export SWWW_TRANSITION_FPS=60
 export SWWW_TRANSITION_TYPE=simple
 
-INTERVAL=1800
+INTERVAL=30
 
 while true; do
   focused_monitor=$(hyprctl monitors -j 2>/dev/null | jq -r '.[] | select(.focused) | .name' 2>/dev/null || hyprctl monitors | awk '/^Monitor/{name=$2} /focused: yes/{print name}')
@@ -52,7 +52,6 @@ while true; do
       pkill rofi 2>/dev/null || true
       if pgrep -x qs >/dev/null 2>&1; then
         pkill qs && qs -c overview &
-        2>/dev/null || true
       fi
       sleep 0.2
       swaync-client --reload-config 2>/dev/null || true
