@@ -248,5 +248,27 @@ hl.bind("SUPER + period", hl.dsp.focus({ workspace = "e+1" }), { desc = "next wo
 hl.bind("SUPER + comma", hl.dsp.focus({ workspace = "e-1" }), { desc = "previous workspace" })
 
 -- Move/resize windows with mainMod + LMB/RMB and dragging
+local dragged_fs_addr = nil
+
+hl.bind("SUPER + mouse:272", function()
+    local w = hl.get_active_window()
+    if w and w.fullscreen and w.fullscreen ~= 0 then
+        dragged_fs_addr = w.address
+    else
+        dragged_fs_addr = nil
+    end
+end, { transparent = true, desc = "track fullscreen state before drag" })
+
+hl.bind("SUPER + mouse:272", function()
+    if dragged_fs_addr then
+        local addr = dragged_fs_addr
+        dragged_fs_addr = nil
+        local w = hl.get_active_window()
+        if w and w.address == addr and (not w.fullscreen or w.fullscreen == 0) then
+            hl.dispatch(hl.dsp.window.fullscreen({ window = "address:" .. addr }))
+        end
+    end
+end, { release = true, desc = "restore fullscreen after drag release" })
+
 hl.bind("SUPER + mouse:272", hl.dsp.window.drag(), { desc = "move window", mouse = true })
 hl.bind("SUPER + mouse:273", hl.dsp.window.resize(), { desc = "resize window", mouse = true })

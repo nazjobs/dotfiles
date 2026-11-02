@@ -9,7 +9,17 @@ local term = USER_DEFAULTS.term or "alacritty"
 -- Common User Keybinds
 hl.unbind("SUPER + CTRL + Return")
 hl.bind("SUPER + CTRL + Return", dsp.exec_cmd("ghostty"), { desc = "Opens your preferred terminal emulator (ghostty)" })
-hl.bind("SUPER + V", dsp.window.float({ action = "toggle" }), { desc = "Switches current window between floating and tiling mode" })
+hl.bind("SUPER + V", function()
+    local w = hl.get_active_window()
+    if w and w.fullscreen and w.fullscreen ~= 0 then
+        hl.dispatch(hl.dsp.window.fullscreen())
+        if not w.floating then
+            hl.dispatch(hl.dsp.window.float({ action = "toggle" }))
+        end
+    else
+        hl.dispatch(hl.dsp.window.float({ action = "toggle" }))
+    end
+end, { desc = "Switches current window between floating and tiling mode" })
 hl.bind("SUPER + F", dsp.window.fullscreen(), { desc = "Toggles current window fullscreen mode" })
 hl.bind("SUPER + CTRL + N", dsp.layout("togglesplit"), { desc = "Toggles current window split mode" })
 hl.bind("SUPER + CTRL + K", dsp.exec_cmd("QT_QPA_PLATFORM=xcb krita"), { desc = "Opens Krita in Qt supported mode" })
@@ -51,5 +61,6 @@ hl.config({
         workspace_center_on = 1,
         movefocus_cycles_fullscreen = true,
         window_direction_monitor_fallback = true,
+        drag_threshold = 10,
     },
 })
