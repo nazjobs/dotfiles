@@ -1,1061 +1,252 @@
--- ==================================================
---  KoolDots (2026)
---  Project URL: https://github.com/LinuxBeginnings
---  License: GNU GPLv3
---  SPDX-License-Identifier: GPL-3.0-or-later
--- ==================================================
+---@module 'hl'
 
--- System defaults migrated from configs/Keybinds.conf (auto-generated).
--- Add keybinds with bind("MODS", "KEY", fn, opts).
--- Example:
--- bind("SUPER", "Z", exec_cmd("thunar"), { description = "Open file manager" })
+local scriptsDir = os.getenv("HOME") .. "/.config/hypr/scripts"
+local UserConfigs = os.getenv("HOME") .. "/.config/hypr/UserConfigs"
+local UserScripts = os.getenv("HOME") .. "/.config/hypr/UserScripts"
+local USER_DEFAULTS = _G.USER_DEFAULTS or {}
 
-local dsp = hl.dsp or hl
 local function resolve_cmd(cmd)
-  local defaults = rawget(_G, "KOOLDOTS_DEFAULTS") or {}
-  local resolved_term = defaults.term or os.getenv("TERMINAL") or "kitty"
-  local resolved_files = defaults.files or "thunar"
-  local resolved_edit = defaults.edit or os.getenv("EDITOR") or "nano"
-  local resolved_visual = defaults.visual or os.getenv("VISUAL") or ""
-  cmd = tostring(cmd)
-  cmd = cmd:gsub("%$term", resolved_term)
-  cmd = cmd:gsub("%$files", resolved_files)
-  cmd = cmd:gsub("%$edit", resolved_edit)
-  cmd = cmd:gsub("%$visual", resolved_visual)
+  cmd = cmd:gsub("%$scriptsDir", scriptsDir)
+  cmd = cmd:gsub("%$UserScripts", UserScripts)
+  cmd = cmd:gsub("%$term", USER_DEFAULTS.term or "alacritty")
+  cmd = cmd:gsub("%$files", USER_DEFAULTS.files or "thunar")
   return cmd
 end
 
-local function exec_cmd(cmd)
-  local resolved = resolve_cmd(cmd)
-  if dsp and dsp.exec_cmd then
-    return dsp.exec_cmd(resolved)
-  end
-  return function()
-    hl.exec_cmd(resolved)
-  end
-end
+-- /* ---- 💫 https://github.com/JaKooLit 💫 ---- */  #
+-- Default Keybinds
+-- visit https://wiki.hyprland.org/Configuring/Binds/ for more info
 
-local function shell_quote(value)
-  return "'" .. tostring(value):gsub("'", "'\\''") .. "'"
-end
+-- /* ---- ✴️ Variables ✴️ ---- */  #
+local mainMod = "SUPER"
+local scriptsDir = os.getenv("HOME") .. "/.config/hypr/scripts"
+local UserConfigs = os.getenv("HOME") .. "/.config/hypr/UserConfigs"
+local UserScripts = os.getenv("HOME") .. "/.config/hypr/UserScripts"
 
--- Legacy dispatcher names no longer exist. `hyprctl dispatch` is a shorthand
--- for `hl.dispatch(...)`, so handing it "workspace 2" makes it evaluate
--- `hl.dispatch(workspace 2)` - a Lua parse error - and the bind silently does
--- nothing. There is therefore no generic translation from a legacy dispatcher
--- string, and this fallback can only report the miss. Add an hl.dsp.* handler
--- above instead of relying on it. The warning is printed once per name, at
--- config load, so an unhandled dispatcher is visible rather than silent.
-local warned_dispatchers = {}
-local function raw_dispatch_cmd(command)
-  local text = tostring(command)
-  local name = text:match("^(%S+)") or text
-  if not warned_dispatchers[name] then
-    warned_dispatchers[name] = true
-    print("[WARN] keybinds: no Lua dispatcher for '" .. name
-      .. "'; the bind will do nothing. Add an hl.dsp.* handler in system_keybinds.lua.")
-  end
-  if dsp and dsp.no_op then
-    return dsp.no_op()
-  end
-  return function() end
-end
+-- settings for User defaults apps - set your default terminal and file manager on this file
+-- source= $UserConfigs/01-UserDefaults.conf
 
-local function trim(value)
-  return (value or ""):gsub("^%s+", ""):gsub("%s+$", "")
-end
+-- STANDAR ####
+-- Common shortcuts
+-- bindr = $mainMod, $mainMod_L, exec, pkill rofi || rofi -show drun -modi drun,filebrowser,run,window # Super Key to Launch rofi menu
+hl.bind("SUPER + SPACE", hl.dsp.exec_cmd(resolve_cmd("pkill rofi || true && rofi -show drun -modi drun,filebrowser,run,window")), { desc = "app launcher" })
+hl.bind("SUPER + B", hl.dsp.exec_cmd(resolve_cmd("xdg-open \"https://\"")), { desc = "open default browser" })
+hl.bind("SUPER + A", hl.dsp.exec_cmd(resolve_cmd("$scriptsDir/OverviewToggle.sh")), { desc = "desktop overview" })
+-- bindd = $mainMod, A, ags overview, exec, pkill rofi || true && ags -t 'overview' # desktop overview (if installed)
+-- bindd = $mainMod, A, Quickshell overview, global, quickshell:overviewToggle # desktop overview (if installed)
+hl.bind("SUPER + Return", hl.dsp.exec_cmd(resolve_cmd("$term")), { desc = "Open terminal" })
+hl.bind("SUPER + E", hl.dsp.exec_cmd(resolve_cmd("$files")), { desc = "file manager" })
 
-local function normalize_mods(mods)
-  mods = trim(mods)
-  if mods == "" then
-    return ""
-  end
-  local known = {
-    super = "SUPER",
-    super_l = "SUPER_L",
-    super_r = "SUPER_R",
-    shift = "SHIFT",
-    shift_l = "SHIFT_L",
-    shift_r = "SHIFT_R",
-    ctrl = "CTRL",
-    control = "CTRL",
-    ctrl_l = "CTRL_L",
-    ctrl_r = "CTRL_R",
-    control_l = "CTRL_L",
-    control_r = "CTRL_R",
-    alt = "ALT",
-    alt_l = "ALT_L",
-    alt_r = "ALT_R",
-    meta = "META",
-    meta_l = "META_L",
-    meta_r = "META_R",
-    mod2 = "MOD2",
-    mod3 = "MOD3",
-    mod5 = "MOD5",
-  }
-  local parts = {}
-  for token in mods:gmatch("%S+") do
-    parts[#parts + 1] = known[token:lower()] or token
-  end
-  return table.concat(parts, " ")
-end
+-- FEATURES / EXTRAS
+hl.bind("SUPER + T", hl.dsp.exec_cmd(resolve_cmd("$scriptsDir/ThemeChanger.sh")), { desc = "Global theme switcher using Wallust" })
+hl.bind("SUPER + CTRL + H", hl.dsp.exec_cmd(resolve_cmd("$scriptsDir/KeyHints.sh")), { desc = "help / cheat sheet" })
+hl.bind("SUPER + ALT + R", hl.dsp.exec_cmd(resolve_cmd("$scriptsDir/Refresh.sh")), { desc = "refresh bar and menus" })
+hl.bind("SUPER + ALT + E", hl.dsp.exec_cmd(resolve_cmd("$scriptsDir/RofiEmoji.sh")), { desc = "emoji menu" })
+hl.bind("SUPER + S", hl.dsp.exec_cmd(resolve_cmd("$scriptsDir/RofiSearch.sh")), { desc = "web search" })
+hl.bind("SUPER + CTRL + S", hl.dsp.exec_cmd(resolve_cmd("rofi -show window")), { desc = "window switcher" })
+hl.bind("SUPER + ALT + O", hl.dsp.exec_cmd(resolve_cmd("$scriptsDir/ChangeBlur.sh")), { desc = "toggle blur" })
+hl.bind("SUPER + SHIFT + G", hl.dsp.exec_cmd(resolve_cmd("$scriptsDir/GameMode.sh")), { desc = "toggle game mode" })
+hl.bind("SUPER + ALT + L", hl.dsp.exec_cmd(resolve_cmd("$scriptsDir/ChangeLayout.sh")), { desc = "toggle master/dwindle layout" })
+hl.bind("SUPER + SHIFT + V", hl.dsp.exec_cmd(resolve_cmd("$scriptsDir/ClipManager.sh")), { desc = "clipboard manager" })
+hl.bind("SUPER + CTRL + R", hl.dsp.exec_cmd(resolve_cmd("$scriptsDir/RofiThemeSelector.sh")), { desc = "rofi theme selector" })
+hl.bind("SUPER + CTRL + SHIFT + R", hl.dsp.exec_cmd(resolve_cmd("pkill rofi || true && $scriptsDir/RofiThemeSelector-modified.sh")), { desc = "rofi theme selector (modified)" })
 
-local function chord(mods, key)
-  mods = normalize_mods(mods):gsub("%s+", " + ")
-  key = trim(key)
-  if mods == "" then
-    return key
-  end
-  return mods .. " + " .. key
-end
+-- bindd = $mainMod CTRL, F, fullscreen, fullscreen
+hl.bind("SUPER + SHIFT + F", hl.dsp.window.fullscreen({ mode = "maximized" }), { desc = "maximize window" })
+-- bindd = $mainMod, SPACE, Float current window, togglefloating,
+hl.bind("SUPER + ALT + SPACE", hl.dsp.exec_cmd(resolve_cmd("hyprctl dispatch workspaceopt allfloat")), { desc = "Float all windows" })
+hl.bind("SUPER + SHIFT + Return", hl.dsp.exec_cmd(resolve_cmd("$scriptsDir/Dropterminal.sh kitty")), { desc = "DropDown terminal" })
 
-local function key_variants(key, mods)
-  key = trim(key):gsub("^xf86", "XF86")
-  local key_aliases = {
-    XF86AudioPlayPause = "XF86AudioPlay",
-    XF86audiolowervolume = "XF86AudioLowerVolume",
-    XF86audiomute = "XF86AudioMute",
-    XF86audioraisevolume = "XF86AudioRaiseVolume",
-    XF86audiostop = "XF86AudioStop",
-  }
-  key = key_aliases[key] or key
-  local shifted_number_keys = {
-    ["code:10"] = "exclam",
-    ["code:11"] = "at",
-    ["code:12"] = "numbersign",
-    ["code:13"] = "dollar",
-    ["code:14"] = "percent",
-    ["code:15"] = "asciicircum",
-    ["code:16"] = "ampersand",
-    ["code:17"] = "asterisk",
-    ["code:18"] = "parenleft",
-    ["code:19"] = "parenright",
-  }
-  local number_keys = {
-    ["code:10"] = "1",
-    ["code:11"] = "2",
-    ["code:12"] = "3",
-    ["code:13"] = "4",
-    ["code:14"] = "5",
-    ["code:15"] = "6",
-    ["code:16"] = "7",
-    ["code:17"] = "8",
-    ["code:18"] = "9",
-    ["code:19"] = "0",
-  }
-  if mods:upper():match("SHIFT") and shifted_number_keys[key] then
-    local number_key = number_keys[key]
-    if number_key then
-      return { shifted_number_keys[key], number_key }
-    end
-    return { shifted_number_keys[key] }
-  end
-  if number_keys[key] then
-    return { number_keys[key] }
-  end
-  return { key }
-end
+-- Desktop zooming or magnifier
+hl.bind("SUPER + ALT + mouse_down", hl.dsp.exec_cmd(resolve_cmd("hyprctl keyword cursor:zoom_factor \"$(hyprctl getoption cursor:zoom_factor | awk 'NR==1 {factor = $2; if (factor < 1) {factor = 1}; print factor * 2.0}')\"")), { desc = "zoom in" })
+hl.bind("SUPER + ALT + mouse_up", hl.dsp.exec_cmd(resolve_cmd("hyprctl keyword cursor:zoom_factor \"$(hyprctl getoption cursor:zoom_factor | awk 'NR==1 {factor = $2; if (factor < 1) {factor = 1}; print factor / 2.0}')\"")), { desc = "zoom out" })
 
-local function workspace_value(value)
-  value = trim(value)
-  return tonumber(value) or value
-end
+-- Waybar / Bar related
+hl.bind("SUPER + CTRL + ALT + B", hl.dsp.exec_cmd(resolve_cmd("pkill -SIGUSR1 waybar")), { desc = "toggle waybar on/off" })
+hl.bind("SUPER + CTRL + B", hl.dsp.exec_cmd(resolve_cmd("$scriptsDir/WaybarStyles.sh")), { desc = "waybar styles menu" })
+hl.bind("SUPER + ALT + B", hl.dsp.exec_cmd(resolve_cmd("$scriptsDir/WaybarLayout.sh")), { desc = "waybar layout menu" })
 
-local function direction(value)
-  local directions = {
-    l = "left",
-    r = "right",
-    u = "up",
-    d = "down",
-    left = "left",
-    right = "right",
-    up = "up",
-    down = "down",
-  }
-  return directions[trim(value)] or trim(value)
-end
+-- Night light toggle (Hyprsunset)
+hl.bind("SUPER + N", hl.dsp.exec_cmd(resolve_cmd("$scriptsDir/Hyprsunset.sh toggle")), { desc = "toggle night light" })
 
-local function dispatch(name, args)
-  local window_api = (dsp and dsp.window) or hl.window or {}
-  name = trim(name)
-  args = trim(args)
-  if name == "exec" then
-    return exec_cmd(args)
-  end
-  if name == "killactive" and window_api.close then
-    return function()
-      hl.dispatch(window_api.close())
-    end
-  end
-  if name == "fullscreen" and window_api.fullscreen then
-    if args == "1" then
-      return function()
-        hl.dispatch(window_api.fullscreen({ mode = "maximized" }))
-      end
-    end
-    return function()
-      hl.dispatch(window_api.fullscreen({ mode = "fullscreen" }))
-    end
-  end
-  if name == "movefocus" and dsp and dsp.focus then
-    return function()
-      local ok, dispatcher = pcall(dsp.focus, { direction = direction(args) })
-      if ok and dispatcher then
-        hl.dispatch(dispatcher)
-      end
-    end
-  end
-  if name == "cyclenext" then
-    -- In-process replacement for scripts/LuaCycleWindow.sh.
-    local previous = args == "prev" or args == "b"
-    return function()
-      local actions = rawget(_G, "KOOLDOTS_WINDOW_ACTIONS")
-      if actions and actions.cycle_window then
-        actions.cycle_window(previous and "previous" or "next")
-      end
-    end
-  end
-  if name == "swapwindow" then
-    local swap_direction = trim(args)
-    if swap_direction == "" or not window_api.swap then
-      return nil
-    end
-    -- Native dispatcher: a no-op when there is no window in that direction,
-    -- which is why the old LuaSwapWindow.sh guard script is gone.
-    return window_api.swap({ direction = direction(swap_direction) })
-  end
-  if name == "workspace" and dsp and dsp.focus then
-    return function()
-      hl.dispatch(dsp.focus({ workspace = workspace_value(args) }))
-    end
-  end
-  if name == "movetoworkspace" then
-    if args == "special" or args:match("^special:") then
-      return function()
-        local win = hl.get_active_window and hl.get_active_window()
-        local ws = win and win.workspace
-        if ws and (ws.special == true or (type(ws.name) == "string" and ws.name:match("^special"))) then
-          local mon = hl.get_active_monitor and hl.get_active_monitor()
-          local active_ws = hl.get_active_workspace and hl.get_active_workspace(mon and mon.id)
-          local target_id = (active_ws and not active_ws.special and active_ws.id) or "+0"
-          if window_api.move then
-            hl.dispatch(window_api.move({ workspace = target_id }))
-          else
-            hl.dispatch(dsp.exec_raw("movetoworkspace " .. tostring(target_id)))
-          end
-          return
-        end
-        if window_api.move then
-          hl.dispatch(window_api.move({ workspace = workspace_value(args) }))
-        else
-          hl.dispatch(dsp.exec_raw("movetoworkspace " .. args))
-        end
-      end
-    end
-    if window_api.move then
-      return function()
-        hl.dispatch(window_api.move({ workspace = workspace_value(args) }))
-      end
-    end
-    return raw_dispatch_cmd("movetoworkspace " .. args)
-  end
-  if name == "movetoworkspacesilent" and window_api.move then
-    return function()
-      hl.dispatch(window_api.move({ workspace = workspace_value(args), follow = false }))
-    end
-  end
-  if name == "togglespecialworkspace" then
-    local workspace_api = (dsp and dsp.workspace) or {}
-    if workspace_api.toggle_special then
-      return function()
-        local ok, dispatcher = pcall(workspace_api.toggle_special, args ~= "" and { name = args } or nil)
-        if ok and dispatcher then
-          hl.dispatch(dispatcher)
-        end
-      end
-    end
-    if args ~= "" then
-      return raw_dispatch_cmd("togglespecialworkspace " .. args)
-    end
-    return raw_dispatch_cmd("togglespecialworkspace")
-  end
-  if name == "togglefloating" and window_api.float then
-    return function()
-      hl.dispatch(window_api.float({ action = "toggle" }))
-    end
-  end
-  if name == "togglegroup" then
-    return function()
-      local group_api = (dsp and dsp.group) or (hl and hl.dsp and hl.dsp.group) or {}
-      if group_api and group_api.toggle then
-        local ok, dispatcher = pcall(group_api.toggle)
-        if ok and dispatcher then
-          hl.dispatch(dispatcher)
-          return
-        end
-      end
-      if dsp and dsp.exec_raw then
-        pcall(hl.dispatch, dsp.exec_raw("togglegroup"))
-      end
-    end
-  end
-  if name == "changegroupactive" then
-    local group_api = (dsp and dsp.group) or (hl and hl.dsp and hl.dsp.group) or {}
-    if group_api and group_api.next and group_api.prev then
-      if args == "b" or args == "prev" or args == "-1" then
-        return function()
-          hl.dispatch(group_api.prev())
-        end
-      end
-      return function()
-        hl.dispatch(group_api.next())
-      end
-    end
-  end
-  if name == "pseudo" and window_api.pseudo then
-    return function()
-      hl.dispatch(window_api.pseudo())
-    end
-  end
-  if (name == "layoutmsg" or name == "layout") and dsp and dsp.layout then
-    return function()
-      local ok, dispatcher = pcall(dsp.layout, args)
-      if ok and dispatcher then
-        hl.dispatch(dispatcher)
-      end
-    end
-  end
-  if name == "togglesplit" and dsp and dsp.layout then
-    return function()
-      local ok, dispatcher = pcall(dsp.layout, "togglesplit")
-      if ok and dispatcher then
-        hl.dispatch(dispatcher)
-      end
-    end
-  end
-  if name == "resizewindow" and window_api.resize then
-    return function()
-      hl.dispatch(window_api.resize())
-    end
-  end
-  if name == "resizeactive" and window_api.resize then
-    local x, y = args:match("^(%-?%d+)%s+(%-?%d+)$")
-    if x and y then
-      return function()
-        hl.dispatch(window_api.resize({ x = tonumber(x) or 0, y = tonumber(y) or 0, relative = true }))
-      end
-    end
-  end
-  if name == "movewindow" then
-    if args == "" and window_api.drag then
-      return function()
-        hl.dispatch(window_api.drag())
-      end
-    end
-    if args ~= "" and window_api.move then
-      return function()
-        local ok, dispatcher = pcall(window_api.move, { direction = direction(args) })
-        if ok and dispatcher then
-          hl.dispatch(dispatcher)
-        end
-      end
-    end
-    if args ~= "" then
-      return raw_dispatch_cmd("movewindow " .. args)
-    end
-    return raw_dispatch_cmd("movewindow")
-  end
-  if name == "bringactivetotop" and window_api.bring_to_top then
-    return window_api.bring_to_top()
-  end
-  if name == "moveintogroup" and window_api.move then
-    return window_api.move({ into_group = direction(args) })
-  end
-  if name == "moveoutofgroup" and window_api.move then
-    if args == "" then
-      return window_api.move({ out_of_group = true })
-    end
-    return window_api.move({ out_of_group = direction(args) })
-  end
-  if name == "movecurrentworkspacetomonitor" then
-    local workspace_api = (dsp and dsp.workspace) or {}
-    if workspace_api.move then
-      return workspace_api.move({ monitor = direction(args) })
-    end
-  end
-  if args ~= "" then
-    return raw_dispatch_cmd(name .. " " .. args)
-  end
-  return raw_dispatch_cmd(name)
-end
+-- FEATURES / EXTRAS (UserScripts)
+hl.bind("SUPER + SHIFT + M", hl.dsp.exec_cmd(resolve_cmd("$UserScripts/RofiBeats.sh")), { desc = "online music" })
+hl.bind("SUPER + W", hl.dsp.exec_cmd(resolve_cmd("$UserScripts/WallpaperSelect.sh")), { desc = "select wallpaper" })
+hl.bind("SUPER + SHIFT + W", hl.dsp.exec_cmd(resolve_cmd("$UserScripts/WallpaperEffects.sh")), { desc = "wallpaper effects" })
+hl.bind("CTRL + ALT + W", hl.dsp.exec_cmd(resolve_cmd("$UserScripts/WallpaperRandom.sh")), { desc = "random wallpaper" })
+hl.bind("SUPER + CTRL + O", hl.dsp.window.set_prop({ prop = "opaque", value = "toggle" }), { desc = "toggle active window opacity" })
+hl.bind("SUPER + SHIFT + K", hl.dsp.exec_cmd(resolve_cmd("$scriptsDir/KeyBinds.sh")), { desc = "search keybinds" })
+hl.bind("SUPER + SHIFT + A", hl.dsp.exec_cmd(resolve_cmd("$scriptsDir/Animations.sh")), { desc = "animations menu" })
+hl.bind("SUPER + SHIFT + O", hl.dsp.exec_cmd(resolve_cmd("$UserScripts/ZshChangeTheme.sh")), { desc = "change oh-my-zsh theme" })
+-- bindlnd = ALT_L, SHIFT_L, switch keyboard layout globally, exec, $scriptsDir/KeyboardLayout.sh switch
+-- bindlnd = SHIFT_L, ALT_L, switch keyboard layout per-window, exec, $scriptsDir/Tak0-Per-Window-Switch.sh
+hl.bind("SUPER + C", hl.dsp.exec_cmd(resolve_cmd("$UserScripts/RofiCalc.sh")), { desc = "calculator" })
 
--- In-process replacements for scripts/LayoutKeybindDispatch.sh and
--- scripts/LuaCycleWindow.sh. They resolve KOOLDOTS_WINDOW_ACTIONS at keypress
--- time so load order does not matter. See lua/window_actions.lua.
-local function layout_cycle(direction)
-  local actions = rawget(_G, "KOOLDOTS_WINDOW_ACTIONS")
-  if actions and actions.layout_cycle then
-    actions.layout_cycle(direction)
-  end
-end
+-- Move current workspaces to monitors (left right up or down)
+hl.bind("SUPER + CTRL + F9", hl.dsp.workspace.move({ monitor = "l" }), { desc = "move workspace to left monitor" })
+hl.bind("SUPER + CTRL + F10", hl.dsp.workspace.move({ monitor = "r" }), { desc = "move workspace to right monitor" })
+hl.bind("SUPER + CTRL + F11", hl.dsp.workspace.move({ monitor = "u" }), { desc = "move workspace to up monitor" })
+hl.bind("SUPER + CTRL + F12", hl.dsp.workspace.move({ monitor = "d" }), { desc = "move workspace to down monitor" })
 
-local function layout_focus(direction)
-  local actions = rawget(_G, "KOOLDOTS_WINDOW_ACTIONS")
-  if actions and actions.layout_focus then
-    actions.layout_focus(direction)
-  end
-end
 
-local function bind(mods, key, fn, opts)
-  local seen = {}
-  for _, key_variant in ipairs(key_variants(key, mods)) do
-    local key_chord = chord(mods, key_variant)
-    if not seen[key_chord] then
-      seen[key_chord] = true
-      if opts then
-        hl.bind(key_chord, fn, opts)
-      else
-        hl.bind(key_chord, fn)
-      end
-    end
-  end
-end
+-- SYSTEM ####
+hl.bind("CTRL + ALT + Delete", hl.dsp.exec_cmd(resolve_cmd("hyprctl dispatch exit 0")), { desc = "exit Hyprland" })
+hl.bind("SUPER + Q", hl.dsp.window.close(), { desc = "close active window" })
+hl.bind("SUPER + SHIFT + Q", hl.dsp.exec_cmd(resolve_cmd("$scriptsDir/KillActiveProcess.sh")), { desc = "Terminate active process" })
+hl.bind("CTRL + ALT + L", hl.dsp.exec_cmd(resolve_cmd("$scriptsDir/LockScreen.sh")), { desc = "lock screen" })
+hl.bind("CTRL + ALT + P", hl.dsp.exec_cmd(resolve_cmd("$scriptsDir/Wlogout.sh")), { desc = "powermenu" })
+hl.bind("SUPER + SHIFT + N", hl.dsp.exec_cmd(resolve_cmd("swaync-client -t -sw")), { desc = "notification panel" })
+hl.bind("SUPER + SHIFT + E", hl.dsp.exec_cmd(resolve_cmd("$scriptsDir/Kool_Quick_Settings.sh")), { desc = "Quick settings menu" })
 
-local function unbind(mods, key)
-  if hl.unbind then
-    local seen = {}
-    for _, key_variant in ipairs(key_variants(key, mods)) do
-      local key_chord = chord(mods, key_variant)
-      if not seen[key_chord] then
-        seen[key_chord] = true
-        local ok = pcall(hl.unbind, mods, key_variant)
-        if not ok then
-          pcall(hl.unbind, key_chord)
-        end
-      end
-    end
-  end
-end
+-- Master Layout
+hl.bind("SUPER + CTRL + D", hl.dsp.layout("removemaster"), { desc = "remove master" })
+hl.bind("SUPER + I", hl.dsp.layout("addmaster"), { desc = "add master" })
+-- NOTE: J/K bindings are set dynamically by scripts/KeybindsLayoutInit.sh and scripts/ChangeLayout.sh
+-- (we intentionally do not bind them statically here to avoid conflicts across layouts)
+-- bindd = $mainMod, J, cycle next, layoutmsg, cyclenext
+-- bindd = $mainMod, K, cycle previous, layoutmsg, cycleprev
+hl.bind("SUPER + CTRL + Return", hl.dsp.layout("swapwithmaster"), { desc = "swap with master" })
 
--- Converted from configs/Keybinds.conf
-bind(
-  "SUPER",
-  "D",
-  exec_cmd(
-    "pkill rofi || true; $HOME/.config/hypr/scripts/RofiFocusedWallpaperLink.sh >/dev/null 2>&1 || true; rofi -show drun -modi drun,filebrowser,run,window -config $HOME/.config/hypr/rofi/config.rasi"
-  ),
-  { description = "app launcher" }
-)
-bind("SUPER", "B", exec_cmd('xdg-open "https://"'), { description = "open default browser" })
-bind("SUPER", "A", exec_cmd("$HOME/.config/hypr/scripts/OverviewToggle.sh"), { description = "desktop overview" })
-bind("SUPER CTRL", "A", exec_cmd("pkill rofi || true && ags -t 'overview'"), { description = "Ags overview" })
-bind(
-  "SUPER",
-  "Return",
-  exec_cmd("$HOME/.config/hypr/scripts/LaunchTerminal.sh '$term'"),
-  { description = "Open terminal" }
-)
-bind(
-  "SUPER",
-  "E",
-  exec_cmd("$HOME/.config/hypr/scripts/LaunchFileManager.sh '$files' '$term'"),
-  { description = "file manager" }
-)
-bind("SUPER", "C", exec_cmd("$HOME/.config/hypr/scripts/rofi-ssh-menu.sh"), { description = "SSH session manager" })
-bind(
-  "SUPER",
-  "T",
-  exec_cmd("$HOME/.config/hypr/scripts/ThemeChanger.sh"),
-  { description = "Global theme switcher using Wallust" }
-)
-bind("SUPER", "H", exec_cmd("$HOME/.config/hypr/scripts/KeyHints.sh"), { description = "help / cheat sheet" })
-bind("SUPER ALT", "R", exec_cmd("$HOME/.config/hypr/scripts/Refresh.sh"), { description = "refresh waybar and menus" })
-bind("SUPER ALT", "E", exec_cmd("$HOME/.config/hypr/scripts/RofiEmoji.sh"), { description = "emoji menu" })
-bind("SUPER", "S", exec_cmd("$HOME/.config/hypr/scripts/RofiSearch.sh"), { description = "web search" })
-bind(
-  "SUPER CTRL",
-  "S",
-  exec_cmd(
-    "$HOME/.config/hypr/scripts/RofiFocusedWallpaperLink.sh >/dev/null 2>&1 || true; rofi -show window -config $HOME/.config/hypr/rofi/config.rasi"
-  ),
-  { description = "window switcher" }
-)
-bind("SUPER ALT", "O", exec_cmd("$HOME/.config/hypr/scripts/ChangeBlur.sh"), { description = "toggle blur" })
-bind("SUPER SHIFT", "G", exec_cmd("$HOME/.config/hypr/scripts/GameMode.sh"), { description = "toggle game mode" })
-bind(
-  "SUPER ALT",
-  "L",
-  exec_cmd("$HOME/.config/hypr/scripts/ChangeLayout.sh toggle"),
-  { description = "toggle layouts" }
-)
-bind("SUPER ALT", "V", exec_cmd("$HOME/.config/hypr/scripts/ClipManager.sh"), { description = "clipboard manager" })
-bind(
-  "SUPER CTRL",
-  "R",
-  exec_cmd("$HOME/.config/hypr/scripts/RofiThemeSelector.sh"),
-  { description = "rofi theme selector" }
-)
-bind(
-  "SUPER CTRL SHIFT",
-  "R",
-  exec_cmd("pkill rofi || true && $HOME/.config/hypr/scripts/RofiThemeSelector-modified.sh"),
-  { description = "rofi theme selector (modified)" }
-)
-bind(
-  "SUPER CTRL",
-  "K",
-  exec_cmd("$HOME/.config/hypr/scripts/Kitty_themes.sh"),
-  { description = "Kitty theme selector" }
-)
-bind(
-  "SUPER CTRL",
-  "G",
-  exec_cmd("$HOME/.config/hypr/scripts/Ghostty_themes.sh"),
-  { description = "Ghostty theme selector" }
-)
-bind(
-  "SUPER CTRL",
-  "W",
-  exec_cmd("$HOME/.config/hypr/scripts/RofiWlogoutTheme.sh"),
-  { description = "wlogout theme selector" }
-)
-bind(
-  "SUPER CTRL SHIFT",
-  "W",
-  exec_cmd("$HOME/.config/hypr/scripts/RofiWlogoutWallust.sh"),
-  { description = "wlogout dynamic wallpaper selector" }
-)
-bind(
-  "SUPER SHIFT",
-  "B",
-  exec_cmd("$HOME/.config/hypr/UserScripts/RainbowBorders-low-cpu.sh  --run-once"),
-  { description = "Set static Rainbow Border" }
-)
-bind(
-  "SUPER SHIFT",
-  "H",
-  exec_cmd("$HOME/.config/hypr/scripts/Toggle-Active-Window-Audio.sh"),
-  { description = "Toggle Mute/Unmute for Active-Window" }
-)
-bind(
-  "ALT SHIFT",
-  "S",
-  exec_cmd("$HOME/.config/hypr/scripts/hyprshot.sh -m region -o $HOME/Pictures/Screenshots"),
-  { description = "Hyprshot Screen Capture" }
-)
-bind("SUPER SHIFT", "F", dispatch("fullscreen", ""), { description = "fullscreen" })
-bind("SUPER", "F", dispatch("fullscreen", "1"), { description = "maximize window" })
-bind("SUPER", "SPACE", dispatch("togglefloating", ""), { description = "Float current window" })
-bind(
-  "SUPER ALT",
-  "SPACE",
-  exec_cmd("$HOME/.config/hypr/scripts/Float-all-Windows.sh"),
-  { description = "Float all windows" }
-)
--- In-process replacement for scripts/float.all.samesize.lua: no hyprctl, no
--- JSON parsing, no interpreter startup. See lua/window_actions.lua.
-bind("SUPER CTRL", "SPACE", function()
-  local actions = rawget(_G, "KOOLDOTS_WINDOW_ACTIONS")
-  if actions and actions.same_size_floating then
-    actions.same_size_floating()
-  end
-end, { description = "Float all windows same size" })
-bind(
-  "SUPER SHIFT",
-  "Return",
-  exec_cmd("$HOME/.config/hypr/scripts/Dropterminal.sh kitty"),
-  { description = "DropDown terminal" }
-)
-bind("SUPER ALT", "mouse_down", function()
-  local factor = (hl and hl.get_config and (hl.get_config("cursor.zoom_factor") or hl.get_config("cursor:zoom_factor")))
-    or 1.0
-  if factor < 1.0 then
-    factor = 1.0
-  end
-  local new_factor = factor * 1.5
-  if new_factor > 16.0 then
-    new_factor = 16.0
-  end
-  if hl and hl.config then
-    hl.config({ cursor = { zoom_factor = new_factor } })
-  end
-end, { description = "zoom in" })
-bind("SUPER ALT", "mouse_up", function()
-  local factor = (hl and hl.get_config and (hl.get_config("cursor.zoom_factor") or hl.get_config("cursor:zoom_factor")))
-    or 1.0
-  local new_factor = factor / 1.5
-  if new_factor < 1.0 then
-    new_factor = 1.0
-  end
-  if hl and hl.config then
-    hl.config({ cursor = { zoom_factor = new_factor } })
-  end
-end, { description = "zoom out" })
-bind("SUPER CTRL ALT", "B", exec_cmd("pkill -SIGUSR1 waybar"), { description = "toggle waybar on/off" })
-bind("SUPER CTRL", "B", exec_cmd("$HOME/.config/hypr/scripts/WaybarStyles.sh"), { description = "waybar styles menu" })
-bind("SUPER ALT", "B", exec_cmd("$HOME/.config/hypr/scripts/WaybarLayout.sh"), { description = "waybar layout menu" })
-bind(
-  "SUPER",
-  "N",
-  exec_cmd("$HOME/.config/hypr/scripts/Hyprsunset.sh toggle"),
-  { description = "Toggle Hyprsunset - night light" }
-)
-bind("SUPER SHIFT", "M", exec_cmd("$HOME/.config/hypr/UserScripts/RofiBeats.sh"), { description = "online music" })
-bind("SUPER", "W", exec_cmd("$HOME/.config/hypr/scripts/WallpaperSelect.sh"), { description = "select wallpaper" })
-bind(
-  "SUPER SHIFT",
-  "W",
-  exec_cmd("$HOME/.config/hypr/scripts/WallpaperEffects.sh"),
-  { description = "wallpaper effects" }
-)
-bind(
-  "CTRL ALT",
-  "W",
-  exec_cmd("$HOME/.config/hypr/UserScripts/WallpaperRandom.sh"),
-  { description = "random wallpaper" }
-)
-bind(
-  "SUPER CTRL",
-  "O",
-  exec_cmd("$HOME/.config/hypr/scripts/ToggleOpacity.sh"),
-  { description = "toggle active window opacity" }
-)
-bind("SUPER SHIFT", "K", exec_cmd("$HOME/.config/hypr/scripts/KeyBinds.sh"), { description = "search keybinds" })
-bind("SUPER SHIFT", "A", exec_cmd("$HOME/.config/hypr/scripts/Animations.sh"), { description = "animations menu" })
-bind(
-  "SUPER SHIFT",
-  "O",
-  exec_cmd("$HOME/.config/hypr/scripts/ZshChangeTheme.sh"),
-  { description = "change oh-my-zsh theme" }
-)
-bind(
-  "ALT",
-  "Shift_L",
-  exec_cmd("$HOME/.config/hypr/scripts/KeyboardLayout.sh switch"),
-  { description = "switch keyboard layout globally", locked = true }
-)
-bind(
-  "ALT",
-  "Shift_R",
-  exec_cmd("$HOME/.config/hypr/scripts/KeyboardLayout.sh switch"),
-  { description = "switch keyboard layout globally", locked = true }
-)
-bind(
-  "SHIFT",
-  "Alt_L",
-  exec_cmd("$HOME/.config/hypr/scripts/Tak0-Per-Window-Switch.sh"),
-  { description = "switch keyboard layout per-window", locked = true }
-)
-bind(
-  "SHIFT",
-  "Alt_R",
-  exec_cmd("$HOME/.config/hypr/scripts/Tak0-Per-Window-Switch.sh"),
-  { description = "switch keyboard layout per-window", locked = true }
-)
-bind("SUPER ALT", "C", exec_cmd("$HOME/.config/hypr/UserScripts/RofiCalc.sh"), { description = "calculator" })
-bind(
-  "SUPER CTRL",
-  "F9",
-  dispatch("movecurrentworkspacetomonitor", "l"),
-  { description = "move workspace to left monitor" }
-)
-bind(
-  "SUPER CTRL",
-  "F10",
-  dispatch("movecurrentworkspacetomonitor", "r"),
-  { description = "move workspace to right monitor" }
-)
-bind(
-  "SUPER CTRL",
-  "F11",
-  dispatch("movecurrentworkspacetomonitor", "u"),
-  { description = "move workspace to up monitor" }
-)
-bind(
-  "SUPER CTRL",
-  "F12",
-  dispatch("movecurrentworkspacetomonitor", "d"),
-  { description = "move workspace to down monitor" }
-)
-bind("CTRL ALT", "Delete", exec_cmd("$HOME/.config/hypr/scripts/Logout.sh"), { description = "exit Hyprland" })
-bind("SUPER", "Q", dispatch("killactive", ""), { description = "close active window" })
-bind(
-  "SUPER SHIFT",
-  "Q",
-  exec_cmd("$HOME/.config/hypr/scripts/KillActiveProcess.sh"),
-  { description = "Terminate active process" }
-)
-bind("CTRL ALT", "L", exec_cmd("$HOME/.config/hypr/scripts/LockScreen.sh"), { description = "lock screen" })
-bind("CTRL ALT", "P", exec_cmd("$HOME/.config/hypr/scripts/Wlogout.sh"), { description = "powermenu" })
-bind("CTRL ALT", "D", exec_cmd("$HOME/.config/hypr/scripts/Dock.sh"), { description = "toggle dock" })
-bind("SUPER SHIFT", "N", exec_cmd("swaync-client -t -sw"), { description = "notification panel" })
-bind(
-  "SUPER SHIFT",
-  "E",
-  exec_cmd("$HOME/.config/hypr/scripts/Kool_Quick_Settings.sh"),
-  { description = "Quick settings menu" }
-)
-bind("SUPER CTRL", "D", dispatch("layoutmsg", "removemaster"), { description = "remove master" })
-bind("SUPER", "I", dispatch("layoutmsg", "addmaster"), { description = "add master" })
-bind("SUPER", "j", function()
-  layout_cycle("next")
-end, { description = "cycle next (layout-aware)" })
-bind("SUPER", "k", function()
-  layout_cycle("previous")
-end, { description = "cycle previous (layout-aware)" })
-bind("SUPER CTRL", "Return", dispatch("layoutmsg", "swapwithmaster"), { description = "swap with master" })
-bind("SUPER SHIFT", "I", dispatch("layoutmsg", "togglesplit"), { description = "toggle split (dwindle)" })
-bind("SUPER", "P", dispatch("pseudo", ""), { description = "toggle pseudo (dwindle)" })
-bind("SUPER", "M", hl.dsp.layout("splitratio 0.3"), { description = "set split ratio 0.3" })
-bind(
-  "SUPER ALT",
-  "1",
-  exec_cmd("$HOME/.config/hypr/scripts/ChangeLayout.sh dwindle"),
-  { description = "layout dwindle" }
-)
-bind("SUPER ALT", "2", exec_cmd("$HOME/.config/hypr/scripts/ChangeLayout.sh master"), { description = "layout master" })
-bind(
-  "SUPER ALT",
-  "3",
-  exec_cmd("$HOME/.config/hypr/scripts/ChangeLayout.sh scrolling"),
-  { description = "layout scrolling" }
-)
-bind(
-  "SUPER ALT",
-  "4",
-  exec_cmd("$HOME/.config/hypr/scripts/ChangeLayout.sh monocle"),
-  { description = "layout monocle" }
-)
-bind("SUPER SHIFT", "period", dispatch("layoutmsg", "move +col"), { description = "move to right column" })
-bind("SUPER SHIFT", "comma", dispatch("layoutmsg", "move -col"), { description = "move to left column" })
-bind("SUPER ALT", "comma", dispatch("layoutmsg", "swapcol l"), { description = "swap columns left" })
-bind("SUPER ALT", "period", dispatch("layoutmsg", "swapcol r"), { description = "swap columns right" })
--- In-process replacement for scripts/ScrollCycleColumnWidth.sh.
-bind("SUPER", "R", function()
-  local actions = rawget(_G, "KOOLDOTS_WINDOW_ACTIONS")
-  if actions and actions.cycle_column_width then
-    actions.cycle_column_width()
-  end
-end, { description = "Cycle column width preset (scrolling)" })
-bind("SUPER ALT", "H", function()
-  if hl and hl.config then
-    hl.config({ scrolling = { direction = "right" } })
-  end
-end, { description = "Horizonal scroll right" })
-bind("SUPER CTRL", "V", function()
-  if hl and hl.config then
-    hl.config({ scrolling = { direction = "down" } })
-  end
-end, { description = "Vertical Scroll down" })
-bind("SUPER ALT", "S", function()
-  if hl and hl.config then
-    local cur = (hl.get_config and (hl.get_config("scrolling.direction") or hl.get_config("scrolling:direction")))
-      or "right"
-    local next_dir = (cur == "right") and "down" or "right"
-    hl.config({ scrolling = { direction = next_dir } })
-  end
-end, { description = "toggle scrolling V/H" })
--- Hyprview: SUPER CTRL+Tab (bound later after workspace/group Tab binds)
--- "smartgrid", "justified", "masonry", "bands", "hero", "spiral"
--- "satellite", "staggered", "columnar", "vortex", "random"
-bind("ALT", "Tab", dispatch("cyclenext", ""), { description = "cycle next window" })
-bind("ALT", "Tab", dispatch("bringactivetotop", ""), { description = "bring active to top" })
-bind(
-  "",
-  "xf86audioraisevolume",
-  exec_cmd("$HOME/.config/hypr/scripts/Volume.sh --inc"),
-  { description = "volume up", locked = true, repeating = true }
-)
-bind(
-  "",
-  "xf86audiolowervolume",
-  exec_cmd("$HOME/.config/hypr/scripts/Volume.sh --dec"),
-  { description = "volume down", locked = true, repeating = true }
-)
-bind(
-  "ALT",
-  "xf86audioraisevolume",
-  exec_cmd("$HOME/.config/hypr/scripts/Volume.sh --inc-precise"),
-  { description = "volume up precise", locked = true, repeating = true }
-)
-bind(
-  "ALT",
-  "xf86audiolowervolume",
-  exec_cmd("$HOME/.config/hypr/scripts/Volume.sh --dec-precise"),
-  { description = "volume down precise", locked = true, repeating = true }
-)
-bind(
-  "",
-  "xf86AudioMicMute",
-  exec_cmd("$HOME/.config/hypr/scripts/Volume.sh --toggle-mic"),
-  { description = "toggle mic mute", locked = true }
-)
-bind(
-  "",
-  "xf86audiomute",
-  exec_cmd("$HOME/.config/hypr/scripts/Volume.sh --toggle"),
-  { description = "toggle mute", locked = true }
-)
-bind("", "xf86Sleep", exec_cmd("systemctl suspend"), { description = "sleep", locked = true })
-bind(
-  "",
-  "xf86Rfkill",
-  exec_cmd("$HOME/.config/hypr/scripts/AirplaneMode.sh"),
-  { description = "airplane mode", locked = true }
-)
-bind(
-  "",
-  "XF86AudioPlay",
-  exec_cmd("$HOME/.config/hypr/scripts/MediaCtrl.sh --pause"),
-  { description = "play/pause", locked = true }
-)
-bind(
-  "",
-  "XF86AudioPause",
-  exec_cmd("$HOME/.config/hypr/scripts/MediaCtrl.sh --pause"),
-  { description = "pause", locked = true }
-)
-bind(
-  "",
-  "XF86AudioNext",
-  exec_cmd("$HOME/.config/hypr/scripts/MediaCtrl.sh --nxt"),
-  { description = "next track", locked = true }
-)
-bind(
-  "",
-  "XF86AudioPrev",
-  exec_cmd("$HOME/.config/hypr/scripts/MediaCtrl.sh --prv"),
-  { description = "previous track", locked = true }
-)
-bind(
-  "",
-  "XF86AudioStop",
-  exec_cmd("$HOME/.config/hypr/scripts/MediaCtrl.sh --stop"),
-  { description = "stop", locked = true }
-)
-bind(
-  "",
-  "xf86MonBrightnessDown",
-  exec_cmd("$HOME/.config/hypr/scripts/Brightness.sh --dec"),
-  { description = "decrease monitor brightness", locked = true, repeating = true }
-)
-bind(
-  "",
-  "xf86MonBrightnessUp",
-  exec_cmd("$HOME/.config/hypr/scripts/Brightness.sh --inc"),
-  { description = "increase monitor brightness", locked = true, repeating = true }
-)
-bind(
-  "CTRL ALT",
-  "equal",
-  exec_cmd("$HOME/.config/hypr/scripts/Brightness.sh --inc"),
-  { description = "increase brightness", locked = true, repeating = true }
-)
-bind(
-  "CTRL ALT",
-  "minus",
-  exec_cmd("$HOME/.config/hypr/scripts/Brightness.sh --dec"),
-  { description = "decrease brightness", locked = true, repeating = true }
-)
-bind(
-  "CTRL ALT",
-  "KP_Add",
-  exec_cmd("$HOME/.config/hypr/scripts/Brightness.sh --inc"),
-  { description = "increase brightness (numpad)", locked = true, repeating = true }
-)
-bind(
-  "CTRL ALT",
-  "KP_Subtract",
-  exec_cmd("$HOME/.config/hypr/scripts/Brightness.sh --dec"),
-  { description = "decrease brightness (numpad)", locked = true, repeating = true }
-)
-bind(
-  "",
-  "xf86KbdBrightnessDown",
-  exec_cmd("$HOME/.config/hypr/scripts/BrightnessKbd.sh --dec"),
-  { description = "decrease keyboard brightness", locked = true, repeating = true }
-)
-bind(
-  "",
-  "xf86KbdBrightnessUp",
-  exec_cmd("$HOME/.config/hypr/scripts/BrightnessKbd.sh --inc"),
-  { description = "increase keyboard brightness", locked = true, repeating = true }
-)
-bind(
-  "",
-  "xf86KbdLightOnOff",
-  exec_cmd("$HOME/.config/hypr/scripts/BrightnessKbd.sh --cycle"),
-  { description = "cycle keyboard brightness", locked = true }
-)
-bind("", "xf86TouchpadToggle", exec_cmd("$HOME/.config/hypr/scripts/TouchPad.sh"), { description = "disable touchpad" })
-bind("", "xf86Launch1", exec_cmd("rog-control-center"), { description = "ASUS Armory crate button" })
-bind("", "xf86Launch3", exec_cmd("asusctl led-mode -n"), { description = "FN+F4 Switch keyboard RGB profile" })
-bind("", "xf86Launch4", exec_cmd("asusctl profile -n"), { description = "FN+F5 change of fan profiles" })
-bind("SUPER", "Print", exec_cmd("$HOME/.config/hypr/scripts/ScreenShot.sh --now"), { description = "screenshot now" })
-bind(
-  "SUPER SHIFT",
-  "Print",
-  exec_cmd("$HOME/.config/hypr/scripts/ScreenShot.sh --area"),
-  { description = "screenshot (area)" }
-)
-bind(
-  "SUPER CTRL",
-  "Print",
-  exec_cmd("$HOME/.config/hypr/scripts/ScreenShot.sh --in5"),
-  { description = "screenshot in 5s" }
-)
-bind(
-  "SUPER CTRL SHIFT",
-  "Print",
-  exec_cmd("$HOME/.config/hypr/scripts/ScreenShot.sh --in10"),
-  { description = "screenshot in 10s" }
-)
-bind(
-  "ALT",
-  "Print",
-  exec_cmd("$HOME/.config/hypr/scripts/ScreenShot.sh --active"),
-  { description = "screenshot active window" }
-)
-bind(
-  "SUPER SHIFT",
-  "S",
-  exec_cmd("$HOME/.config/hypr/scripts/ScreenShot.sh --swappy"),
-  { description = "screenshot (swappy)" }
-)
--- Screenshot keybindings using F6 (no PrintSrc button)
-bind("SUPER", "F6", exec_cmd("$HOME/.config/hypr/scripts/ScreenShot.sh --now"), { description = "screenshot" })
-bind(
-  "SUPER SHIFT",
-  "F6",
-  exec_cmd("$HOME/.config/hypr/scripts/ScreenShot.sh --area"),
-  { description = "screenshot (area)" }
-)
-bind(
-  "SUPER CTRL",
-  "F6",
-  exec_cmd("$HOME/.config/hypr/scripts/ScreenShot.sh --in5"),
-  { description = "screenshot (5 secs delay)" }
-)
-bind(
-  "SUPER ALT",
-  "F6",
-  exec_cmd("$HOME/.config/hypr/scripts/ScreenShot.sh --in10"),
-  { description = "screenshot (10 secs delay)" }
-)
-bind(
-  "ALT",
-  "F6",
-  exec_cmd("$HOME/.config/hypr/scripts/ScreenShot.sh --active"),
-  { description = "screenshot (active window only)" }
-)
--- Bind the resize dispatcher objects directly (tier 1): no Lua closure runs at
--- keypress, no size query, no process. relative = true does the delta maths in
--- C++ and respects Hyprland's minimum window size.
-bind("SUPER SHIFT", "left", hl.dsp.window.resize({ x = -50, y = 0, relative = true }), { description = "resize left (-50)", repeating = true })
-bind("SUPER SHIFT", "right", hl.dsp.window.resize({ x = 50, y = 0, relative = true }), { description = "resize right (+50)", repeating = true })
-bind("SUPER SHIFT", "up", hl.dsp.window.resize({ x = 0, y = -50, relative = true }), { description = "resize up (-50)", repeating = true })
-bind("SUPER SHIFT", "down", hl.dsp.window.resize({ x = 0, y = 50, relative = true }), { description = "resize down (+50)", repeating = true })
-bind("SUPER CTRL", "left", dispatch("movewindow", "l"), { description = "move window left" })
-bind("SUPER CTRL", "right", dispatch("movewindow", "r"), { description = "move window right" })
-bind("SUPER CTRL", "up", dispatch("movewindow", "u"), { description = "move window up" })
-bind("SUPER CTRL", "down", dispatch("movewindow", "d"), { description = "move window down" })
--- Native swap dispatchers. These are a no-op when there is no window in that
--- direction, so the old LuaSwapWindow.sh overlap-detection guard is gone.
-bind("SUPER ALT", "left", hl.dsp.window.swap({ direction = "left" }), { description = "swap window left" })
-bind("SUPER ALT", "right", hl.dsp.window.swap({ direction = "right" }), { description = "swap window right" })
-bind("SUPER ALT", "up", hl.dsp.window.swap({ direction = "up" }), { description = "swap window up" })
-bind("SUPER ALT", "down", hl.dsp.window.swap({ direction = "down" }), { description = "swap window down" })
-bind("SUPER", "G", dispatch("togglegroup", ""), { description = "toggle group" })
-bind("SUPER", "Tab", dispatch("changegroupactive", "f"), { description = "Change Group Forward" })
--- SUPER CTRL+Tab is Hyprview Toggle (not change active in group)
-bind("SUPER SHIFT", "Tab", dispatch("changegroupactive", "b"), { description = "Change Group Back" })
-bind("SUPER CTRL", "J", dispatch("moveintogroup", "l"), { description = "Move left into group" })
-bind("SUPER CTRL", "L", dispatch("moveintogroup", "r"), { description = "Move Right into group" })
-bind("SUPER CTRL", "H", dispatch("moveoutofgroup", ""), { description = "Move active out of group" })
-bind("SUPER", "left", function()
-  layout_focus("left")
-end, { description = "focus left (layout-aware)" })
-bind("SUPER", "right", function()
-  layout_focus("right")
-end, { description = "focus right (layout-aware)" })
-bind("SUPER", "up", function()
-  layout_focus("up")
-end, { description = "focus up (layout-aware)" })
-bind("SUPER", "down", function()
-  layout_focus("down")
-end, { description = "focus down (layout-aware)" })
-bind("SUPER", "tab", dispatch("workspace", "m+1"), { description = "next workspace" })
-bind("SUPER SHIFT", "tab", dispatch("workspace", "m-1"), { description = "previous workspace" })
-local qs_hyprview_layout = "smartgrid"
-bind(
-  "SUPER CTRL",
-  "tab",
-  exec_cmd("$HOME/.config/hypr/scripts/toggle-qs-hyprview.sh " .. qs_hyprview_layout),
-  { description = "Hyprview overview Toggle" }
-)
-bind("SUPER SHIFT", "U", dispatch("movetoworkspace", "special"), { description = "move to special workspace" })
-bind("SUPER", "U", dispatch("togglespecialworkspace", ""), { description = "toggle special workspace" })
-bind("SUPER", "code:10", dispatch("workspace", "1"), { description = "workspace 1" })
-bind("SUPER", "code:11", dispatch("workspace", "2"), { description = "workspace 2" })
-bind("SUPER", "code:12", dispatch("workspace", "3"), { description = "workspace 3" })
-bind("SUPER", "code:13", dispatch("workspace", "4"), { description = "workspace 4" })
-bind("SUPER", "code:14", dispatch("workspace", "5"), { description = "workspace 5" })
-bind("SUPER", "code:15", dispatch("workspace", "6"), { description = "workspace 6" })
-bind("SUPER", "code:16", dispatch("workspace", "7"), { description = "workspace 7" })
-bind("SUPER", "code:17", dispatch("workspace", "8"), { description = "workspace 8" })
-bind("SUPER", "code:18", dispatch("workspace", "9"), { description = "workspace 9" })
-bind("SUPER", "code:19", dispatch("workspace", "10"), { description = "workspace 10" })
-bind("SUPER SHIFT", "code:10", dispatch("movetoworkspace", "1"), { description = "move to workspace 1" })
-bind("SUPER SHIFT", "code:11", dispatch("movetoworkspace", "2"), { description = "move to workspace 2" })
-bind("SUPER SHIFT", "code:12", dispatch("movetoworkspace", "3"), { description = "move to workspace 3" })
-bind("SUPER SHIFT", "code:13", dispatch("movetoworkspace", "4"), { description = "move to workspace 4" })
-bind("SUPER SHIFT", "code:14", dispatch("movetoworkspace", "5"), { description = "move to workspace 5" })
-bind("SUPER SHIFT", "code:15", dispatch("movetoworkspace", "6"), { description = "move to workspace 6" })
-bind("SUPER SHIFT", "code:16", dispatch("movetoworkspace", "7"), { description = "move to workspace 7" })
-bind("SUPER SHIFT", "code:17", dispatch("movetoworkspace", "8"), { description = "move to workspace 8" })
-bind("SUPER SHIFT", "code:18", dispatch("movetoworkspace", "9"), { description = "move to workspace 9" })
-bind("SUPER SHIFT", "code:19", dispatch("movetoworkspace", "10"), { description = "move to workspace 10" })
-bind("SUPER SHIFT", "bracketleft", dispatch("movetoworkspace", "-1"), { description = "move to previous workspace" })
-bind("SUPER SHIFT", "bracketright", dispatch("movetoworkspace", "+1"), { description = "move to next workspace" })
-bind("SUPER CTRL", "code:10", dispatch("movetoworkspacesilent", "1"), { description = "move silently to workspace 1" })
-bind("SUPER CTRL", "code:11", dispatch("movetoworkspacesilent", "2"), { description = "move silently to workspace 2" })
-bind("SUPER CTRL", "code:12", dispatch("movetoworkspacesilent", "3"), { description = "move silently to workspace 3" })
-bind("SUPER CTRL", "code:13", dispatch("movetoworkspacesilent", "4"), { description = "move silently to workspace 4" })
-bind("SUPER CTRL", "code:14", dispatch("movetoworkspacesilent", "5"), { description = "move silently to workspace 5" })
-bind("SUPER CTRL", "code:15", dispatch("movetoworkspacesilent", "6"), { description = "move silently to workspace 6" })
-bind("SUPER CTRL", "code:16", dispatch("movetoworkspacesilent", "7"), { description = "move silently to workspace 7" })
-bind("SUPER CTRL", "code:17", dispatch("movetoworkspacesilent", "8"), { description = "move silently to workspace 8" })
-bind("SUPER CTRL", "code:18", dispatch("movetoworkspacesilent", "9"), { description = "move silently to workspace 9" })
-bind(
-  "SUPER CTRL",
-  "code:19",
-  dispatch("movetoworkspacesilent", "10"),
-  { description = "move silently to workspace 10" }
-)
-bind(
-  "SUPER CTRL",
-  "bracketleft",
-  dispatch("movetoworkspacesilent", "-1"),
-  { description = "move silently to previous workspace" }
-)
-bind(
-  "SUPER CTRL",
-  "bracketright",
-  dispatch("movetoworkspacesilent", "+1"),
-  { description = "move silently to next workspace" }
-)
-bind("SUPER", "mouse_down", dispatch("workspace", "e+1"), { description = "next workspace" })
-bind("SUPER", "mouse_up", dispatch("workspace", "e-1"), { description = "previous workspace" })
-bind("SUPER", "period", dispatch("workspace", "e+1"), { description = "next workspace" })
-bind("SUPER", "comma", dispatch("workspace", "e-1"), { description = "previous workspace" })
-bind("SUPER", "mouse:272", dispatch("movewindow", ""), { description = "move window" })
-bind("SUPER", "mouse:273", dispatch("resizewindow", ""), { description = "resize window" })
+-- Dwindle Layout
+hl.bind("SUPER + SHIFT + I", hl.dsp.layout("togglesplit"), { desc = "toggle split (dwindle)" })
+hl.bind("SUPER + P", hl.dsp.window.pseudo(), { desc = "toggle pseudo (dwindle)" })
 
--- KB passthrough submap: SUPER SHIFT P enters a submap that lets the keyboard
--- pass through to the focused window. The only key bound inside the submap is
--- SUPER ALT P, which resets back to the normal submap. Waybar's hyprland/submap
--- module shows "submap: Bind KB" only while it is active.
-bind("SUPER SHIFT", "P", hl.dsp.submap("Bind KB"), { description = "Enter KB passthrough submap" })
-hl.define_submap("Bind KB", function()
-  bind("SUPER ALT", "P", hl.dsp.submap("reset"), { description = "Exit KB passthrough submap" })
-end)
+-- Works on either layout (Master or Dwindle)
+hl.bind("SUPER + M", hl.dsp.exec_cmd(resolve_cmd("hyprctl dispatch splitratio 0.3")), { desc = "set split ratio 0.3" })
+-- layout aware keybinds
+hl.on("hyprland.start", function() hl.exec_cmd("" .. scriptsDir .. "/ChangeLayout.sh init") end)
+
+
+-- Cycle windows; if floating bring to top
+hl.bind("ALT + tab", hl.dsp.window.cycle_next(), { desc = "cycle next window" })
+hl.bind("ALT + tab", hl.dsp.window.bring_to_top(), { desc = "bring active to top" })
+
+-- Special Keys / Hot Keys
+hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd(resolve_cmd("$scriptsDir/Volume.sh --inc")), { desc = "volume up", repeating = true, locked = true })
+hl.bind("XF86AudioLowerVolume", hl.dsp.exec_cmd(resolve_cmd("$scriptsDir/Volume.sh --dec")), { desc = "volume down", repeating = true, locked = true })
+hl.bind("ALT + XF86AudioRaiseVolume", hl.dsp.exec_cmd(resolve_cmd("$scriptsDir/Volume.sh --inc-precise")), { desc = "volume up precise", repeating = true, locked = true })
+hl.bind("ALT + XF86AudioLowerVolume", hl.dsp.exec_cmd(resolve_cmd("$scriptsDir/Volume.sh --dec-precise")), { desc = "volume down precise", repeating = true, locked = true })
+hl.bind("XF86AudioMicMute", hl.dsp.exec_cmd(resolve_cmd("$scriptsDir/Volume.sh --toggle-mic")), { desc = "toggle mic mute", locked = true })
+hl.bind("XF86AudioMute", hl.dsp.exec_cmd(resolve_cmd("$scriptsDir/Volume.sh --toggle")), { desc = "toggle mute", locked = true })
+hl.bind("XF86Sleep", hl.dsp.exec_cmd(resolve_cmd("systemctl suspend")), { desc = "sleep", locked = true })
+hl.bind("XF86Rfkill", hl.dsp.exec_cmd(resolve_cmd("$scriptsDir/AirplaneMode.sh")), { desc = "airplane mode", locked = true })
+
+-- media controls using keyboards
+hl.bind("XF86AudioPlay", hl.dsp.exec_cmd(resolve_cmd("$scriptsDir/MediaCtrl.sh --pause")), { desc = "play/pause", locked = true })
+hl.bind("XF86AudioPause", hl.dsp.exec_cmd(resolve_cmd("$scriptsDir/MediaCtrl.sh --pause")), { desc = "pause", locked = true })
+hl.bind("XF86AudioPlay", hl.dsp.exec_cmd(resolve_cmd("$scriptsDir/MediaCtrl.sh --pause")), { desc = "play", locked = true })
+hl.bind("XF86AudioNext", hl.dsp.exec_cmd(resolve_cmd("$scriptsDir/MediaCtrl.sh --nxt")), { desc = "next track", locked = true })
+hl.bind("XF86AudioPrev", hl.dsp.exec_cmd(resolve_cmd("$scriptsDir/MediaCtrl.sh --prv")), { desc = "previous track", locked = true })
+hl.bind("XF86AudioStop", hl.dsp.exec_cmd(resolve_cmd("$scriptsDir/MediaCtrl.sh --stop")), { desc = "stop", locked = true })
+
+-- Screenshot keybindings NOTE: You may need to press Fn key as well
+-- bindd = $mainMod, Print, screenshot now, exec, $scriptsDir/ScreenShot.sh --now
+-- bindd = $mainMod SHIFT, Print, screenshot (area), exec, $scriptsDir/ScreenShot.sh --area
+-- bindd = $mainMod CTRL, Print, screenshot in 5s, exec, $scriptsDir/ScreenShot.sh --in5
+-- bindd = $mainMod CTRL SHIFT, Print, screenshot in 10s, exec, $scriptsDir/ScreenShot.sh --in10
+-- bindd = ALT, Print, screenshot active window, exec, $scriptsDir/ScreenShot.sh --active
+-- 
+-- screenshot with swappy (another screenshot tool)
+-- bindd = $mainMod SHIFT, S, screenshot (swappy), exec, $scriptsDir/ScreenShot.sh --swappy
+
+-- Resize windows
+hl.bind("SUPER + SHIFT + left", hl.dsp.window.resize({ x = -50, y = 0 }), { desc = "resize left (-50)", repeating = true })
+hl.bind("SUPER + SHIFT + right", hl.dsp.window.resize({ x = 50, y = 0 }), { desc = "resize right (+50)", repeating = true })
+hl.bind("SUPER + SHIFT + up", hl.dsp.window.resize({ x = 0, y = -50 }), { desc = "resize up (-50)", repeating = true })
+hl.bind("SUPER + SHIFT + down", hl.dsp.window.resize({ x = 0, y = 50 }), { desc = "resize down (+50)", repeating = true })
+
+-- Move windows
+hl.bind("SUPER + CTRL + left", hl.dsp.window.move({ direction = "left" }), { desc = "move window left" })
+hl.bind("SUPER + CTRL + right", hl.dsp.window.move({ direction = "right" }), { desc = "move window right" })
+hl.bind("SUPER + CTRL + up", hl.dsp.window.move({ direction = "up" }), { desc = "move window up" })
+hl.bind("SUPER + CTRL + down", hl.dsp.window.move({ direction = "down" }), { desc = "move window down" })
+
+-- Swap windows
+hl.bind("SUPER + ALT + left", hl.dsp.window.swap({ direction = "left" }), { desc = "swap window left" })
+hl.bind("SUPER + ALT + right", hl.dsp.window.swap({ direction = "right" }), { desc = "swap window right" })
+hl.bind("SUPER + ALT + up", hl.dsp.window.swap({ direction = "up" }), { desc = "swap window up" })
+hl.bind("SUPER + ALT + down", hl.dsp.window.swap({ direction = "down" }), { desc = "swap window down" })
+
+-- group
+hl.bind("SUPER + G", hl.dsp.group.toggle(), { desc = "toggle group" })
+
+-- Navigate within a group
+hl.bind("SUPER + Tab", hl.dsp.group.next(), { desc = "Change Group Forward" })
+hl.bind("SUPER + CTRL + tab", hl.dsp.group.next(), { desc = "change active in group" })
+hl.bind("SUPER + CTRL + SHIFT + Tab", hl.dsp.group.prev(), { desc = "Change Group Back" })
+
+-- Move window into/out of group
+hl.bind("SUPER + CTRL + K", hl.dsp.window.move({ into_group = "left" }), { desc = "Move left into group" })
+hl.bind("SUPER + CTRL + L", hl.dsp.window.move({ into_group = "right" }), { desc = "Move Right into group" })
+hl.bind("SUPER + CTRL + H", hl.dsp.window.move({ out_of_group = true }), { desc = "Move active out of group" })
+
+-- Try to dynamically move in grouped window and when ungrouped
+-- Not working for me DW 11/26/25  PR: https://github.com/JaKooLit/Hyprland-Dots/pull/872
+-- bindd = $mainMod, right, focus right, exec, bash -c 'if hyprctl activewindow -j | jq -e "((.grouped | type) == \"boolean\") or (.address == (.grouped[-1] // empty))" >/dev/null 2>&1; then hyprctl dispatch movefocus r; else hyprctl dispatch changegroupactive f; fi'
+-- bindd = $mainMod, left, focus left, exec, bash -c 'if hyprctl activewindow -j | jq -e "((.grouped | type) == \"boolean\") or (.address == (.grouped[0] // empty))" >/dev/null 2>&1; then hyprctl dispatch movefocus l; else hyprctl dispatch changegroupactive b; fi'
+
+-- Move focus with mainMod + arrow keys
+hl.bind("SUPER + left", hl.dsp.focus({ direction = "left" }), { desc = "focus left" })
+hl.bind("SUPER + right", hl.dsp.focus({ direction = "right" }), { desc = "focus right" })
+hl.bind("SUPER + up", hl.dsp.focus({ direction = "up" }), { desc = "focus up" })
+hl.bind("SUPER + down", hl.dsp.focus({ direction = "down" }), { desc = "focus down" })
+
+-- Workspaces related
+hl.bind("SUPER + tab", hl.dsp.focus({ workspace = "m+1" }), { desc = "next workspace" })
+hl.bind("SUPER + SHIFT + tab", hl.dsp.focus({ workspace = "m-1" }), { desc = "previous workspace" })
+
+-- Special workspace
+hl.bind("SUPER + SHIFT + U", hl.dsp.window.move({ workspace = "special" }), { desc = "move to special workspace" })
+hl.bind("SUPER + U", hl.dsp.workspace.toggle_special("special"), { desc = "toggle special workspace" })
+
+-- The following mappings use the key codes to better support various keyboard layouts
+-- 1 is code:10, 2 is code 11, etc
+-- Switch workspaces with mainMod + [0-9]
+hl.bind("SUPER + code:10", hl.dsp.focus({ workspace = 1 }), { desc = "workspace 1" })
+hl.bind("SUPER + code:11", hl.dsp.focus({ workspace = 2 }), { desc = "workspace 2" })
+hl.bind("SUPER + code:12", hl.dsp.focus({ workspace = 3 }), { desc = "workspace 3" })
+hl.bind("SUPER + code:13", hl.dsp.focus({ workspace = 4 }), { desc = "workspace 4" })
+hl.bind("SUPER + code:14", hl.dsp.focus({ workspace = 5 }), { desc = "workspace 5" })
+hl.bind("SUPER + code:15", hl.dsp.focus({ workspace = 6 }), { desc = "workspace 6" })
+hl.bind("SUPER + code:16", hl.dsp.focus({ workspace = 7 }), { desc = "workspace 7" })
+hl.bind("SUPER + code:17", hl.dsp.focus({ workspace = 8 }), { desc = "workspace 8" })
+hl.bind("SUPER + code:18", hl.dsp.focus({ workspace = 9 }), { desc = "workspace 9" })
+hl.bind("SUPER + code:19", hl.dsp.focus({ workspace = 10 }), { desc = "workspace 10" })
+
+-- Move active window and follow to workspace mainMod + SHIFT [0-9]
+hl.bind("SUPER + SHIFT + code:10", hl.dsp.window.move({ workspace = 1 }), { desc = "move to workspace 1" })
+hl.bind("SUPER + SHIFT + code:11", hl.dsp.window.move({ workspace = 2 }), { desc = "move to workspace 2" })
+hl.bind("SUPER + SHIFT + code:12", hl.dsp.window.move({ workspace = 3 }), { desc = "move to workspace 3" })
+hl.bind("SUPER + SHIFT + code:13", hl.dsp.window.move({ workspace = 4 }), { desc = "move to workspace 4" })
+hl.bind("SUPER + SHIFT + code:14", hl.dsp.window.move({ workspace = 5 }), { desc = "move to workspace 5" })
+hl.bind("SUPER + SHIFT + code:15", hl.dsp.window.move({ workspace = 6 }), { desc = "move to workspace 6" })
+hl.bind("SUPER + SHIFT + code:16", hl.dsp.window.move({ workspace = 7 }), { desc = "move to workspace 7" })
+hl.bind("SUPER + SHIFT + code:17", hl.dsp.window.move({ workspace = 8 }), { desc = "move to workspace 8" })
+hl.bind("SUPER + SHIFT + code:18", hl.dsp.window.move({ workspace = 9 }), { desc = "move to workspace 9" })
+hl.bind("SUPER + SHIFT + code:19", hl.dsp.window.move({ workspace = 10 }), { desc = "move to workspace 10" })
+hl.bind("SUPER + SHIFT + bracketleft", hl.dsp.window.move({ workspace = "-1" }), { desc = "move to previous workspace" })
+hl.bind("SUPER + SHIFT + bracketright", hl.dsp.window.move({ workspace = "+1" }), { desc = "move to next workspace" })
+
+-- Move active window to a workspace silently mainMod + CTRL [0-9]
+hl.bind("SUPER + CTRL + code:10", hl.dsp.window.move({ workspace = 1, follow = false }), { desc = "move silently to workspace 1" })
+hl.bind("SUPER + CTRL + code:11", hl.dsp.window.move({ workspace = 2, follow = false }), { desc = "move silently to workspace 2" })
+hl.bind("SUPER + CTRL + code:12", hl.dsp.window.move({ workspace = 3, follow = false }), { desc = "move silently to workspace 3" })
+hl.bind("SUPER + CTRL + code:13", hl.dsp.window.move({ workspace = 4, follow = false }), { desc = "move silently to workspace 4" })
+hl.bind("SUPER + CTRL + code:14", hl.dsp.window.move({ workspace = 5, follow = false }), { desc = "move silently to workspace 5" })
+hl.bind("SUPER + CTRL + code:15", hl.dsp.window.move({ workspace = 6, follow = false }), { desc = "move silently to workspace 6" })
+hl.bind("SUPER + CTRL + code:16", hl.dsp.window.move({ workspace = 7, follow = false }), { desc = "move silently to workspace 7" })
+hl.bind("SUPER + CTRL + code:17", hl.dsp.window.move({ workspace = 8, follow = false }), { desc = "move silently to workspace 8" })
+hl.bind("SUPER + CTRL + code:18", hl.dsp.window.move({ workspace = 9, follow = false }), { desc = "move silently to workspace 9" })
+hl.bind("SUPER + CTRL + code:19", hl.dsp.window.move({ workspace = 10, follow = false }), { desc = "move silently to workspace 10" })
+hl.bind("SUPER + CTRL + bracketleft", hl.dsp.window.move({ workspace = "-1", follow = false }), { desc = "move silently to previous workspace" })
+hl.bind("SUPER + CTRL + bracketright", hl.dsp.window.move({ workspace = "+1", follow = false }), { desc = "move silently to next workspace" })
+
+-- Scroll through existing workspaces with mainMod + scroll
+hl.bind("SUPER + mouse_down", hl.dsp.focus({ workspace = "e+1" }), { desc = "next workspace" })
+hl.bind("SUPER + mouse_up", hl.dsp.focus({ workspace = "e-1" }), { desc = "previous workspace" })
+hl.bind("SUPER + period", hl.dsp.focus({ workspace = "e+1" }), { desc = "next workspace" })
+hl.bind("SUPER + comma", hl.dsp.focus({ workspace = "e-1" }), { desc = "previous workspace" })
+
+-- Move/resize windows with mainMod + LMB/RMB and dragging
+hl.bind("SUPER + mouse:272", hl.dsp.window.drag(), { desc = "move window", drag = true })
+hl.bind("SUPER + mouse:273", hl.dsp.window.resize(), { desc = "resize window", drag = true })
