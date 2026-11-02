@@ -33,7 +33,11 @@ fi
 echo "Starting dispatch of '$APP' to workspace $TARGET_WORKSPACE at $(date)" >>"$LOGFILE"
 # Starting the dispatch process and logging the event.
 # Avoid early workspace focus issues by switching workspace first.
-hyprctl dispatch workspace "$TARGET_WORKSPACE" >>"$LOGFILE" 2>&1
+if [[ "$TARGET_WORKSPACE" =~ ^-?[0-9]+$ ]]; then
+  hyprctl dispatch "hl.dsp.focus({ workspace = $TARGET_WORKSPACE })" >>"$LOGFILE" 2>&1
+else
+  hyprctl dispatch "hl.dsp.focus({ workspace = '$TARGET_WORKSPACE' })" >>"$LOGFILE" 2>&1
+fi
 sleep 0.4
 
 # Launch the application in the background and disown it.
@@ -51,7 +55,11 @@ for i in {1..30}; do
   if [[ -n "$win" ]]; then
     echo "Found window $win for app '$APP', moving to workspace $TARGET_WORKSPACE" >>"$LOGFILE"
     # Move the window to the target workspace.
-    hyprctl dispatch movetoworkspace "$TARGET_WORKSPACE,address:$win" >>"$LOGFILE" 2>&1
+    if [[ "$TARGET_WORKSPACE" =~ ^-?[0-9]+$ ]]; then
+      hyprctl dispatch "hl.dsp.window.move({ workspace = $TARGET_WORKSPACE, window = 'address:$win' })" >>"$LOGFILE" 2>&1
+    else
+      hyprctl dispatch "hl.dsp.window.move({ workspace = '$TARGET_WORKSPACE', window = 'address:$win' })" >>"$LOGFILE" 2>&1
+    fi
     exit 0
   fi
   sleep 0.3
