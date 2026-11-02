@@ -6,27 +6,21 @@
 hl.gesture({
     fingers = 3,
     direction = "up",
-    action = function()
-        hl.dispatch(hl.dsp.window.fullscreen())
-    end,
+    action = "fullscreen",
 })
 
--- 4-finger swipe left closes active window
+-- 4-finger swipe left closes active window (with cancel-on-swipe-back)
 hl.gesture({
     fingers = 4,
     direction = "left",
-    action = function()
-        hl.dispatch(hl.dsp.window.close())
-    end,
+    action = "close",
 })
 
 -- 4-finger swipe right toggles float/tile
 hl.gesture({
     fingers = 4,
     direction = "right",
-    action = function()
-        hl.dispatch(hl.dsp.window.float({ action = "toggle" }))
-    end,
+    action = "float",
 })
 
 hl.config({
@@ -38,6 +32,7 @@ hl.config({
         on_focus_under_fullscreen = 1,
         -- 1: When a fullscreen window is closed, the next focused window STAYS fullscreen
         exit_window_retains_fullscreen = 1,
+        animate_mouse_windowdragging = true,
     },
     input = {
         kb_layout = "us",
