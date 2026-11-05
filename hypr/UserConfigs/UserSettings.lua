@@ -36,9 +36,6 @@ hl.config({
     },
     input = {
         kb_layout = "us",
-        touchpad = {
-            flip_x = true,
-        },
     },
     dwindle = {
         -- preserve_split MUST be true for togglesplit (horizontal <-> vertical) to work
