@@ -16,23 +16,11 @@ hl.gesture({
     action = "close",
 })
 
--- 4-finger swipe right toggles float/tile (handles tiled, floating, and fullscreen windows)
+-- 4-finger swipe right toggles float/tile
 hl.gesture({
     fingers = 4,
     direction = "right",
-    action = function()
-        local w = hl.get_active_window()
-        if w then
-            if w.fullscreen and w.fullscreen ~= 0 then
-                hl.dispatch(hl.dsp.window.fullscreen())
-                if not w.floating then
-                    hl.dispatch(hl.dsp.window.float({ action = "toggle" }))
-                end
-            else
-                hl.dispatch(hl.dsp.window.float({ action = "toggle" }))
-            end
-        end
-    end,
+    action = "float",
 })
 
 hl.config({
@@ -48,6 +36,9 @@ hl.config({
     },
     input = {
         kb_layout = "us",
+        touchpad = {
+            flip_x = true,
+        },
     },
     dwindle = {
         -- preserve_split MUST be true for togglesplit (horizontal <-> vertical) to work
