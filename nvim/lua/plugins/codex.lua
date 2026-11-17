@@ -1,0 +1,25 @@
+return {
+  "nwiizo/codex.nvim",
+  cond = not vim.g.vscode,
+  event = "VeryLazy",
+  opts = {},
+  keys = {
+    { "<leader>a", "", desc = "+ai", mode = { "n", "x" } },
+    { "<leader>ac", "<cmd>Codex<cr>", desc = "Toggle Codex" },
+    { "<leader>af", "<cmd>CodexFocus<cr>", desc = "Focus or hide Codex" },
+    { "<leader>ar", "<cmd>CodexResume<cr>", desc = "Resume Codex" },
+    { "<leader>aC", "<cmd>CodexContinue<cr>", desc = "Continue latest Codex session" },
+    { "<leader>ab", "<cmd>CodexAdd<cr>", desc = "Add current buffer to Codex" },
+    { "<leader>aa", "<cmd>CodexAsk<cr>", desc = "Ask Codex with file context" },
+    { "<leader>as", ":<C-U>CodexSendVisual<cr>", mode = "x", desc = "Send selection to Codex" },
+    { "<leader>aS", ":<C-U>CodexAddVisual<cr>", mode = "x", desc = "Add selection to Codex composer" },
+    {
+      "<leader>as",
+      "<cmd>CodexTreeAdd<cr>",
+      desc = "Add explorer files to Codex",
+      ft = { "NvimTree", "neo-tree", "oil", "minifiles", "netrw", "snacks_picker_list" },
+    },
+    { "<leader>ad", "<cmd>CodexDiff<cr>", desc = "View tracked changes" },
+    { "<leader>aq", "<cmd>CodexStop<cr>", desc = "Stop Codex" },
+  },
+}
