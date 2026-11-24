@@ -120,5 +120,5 @@ if status is-interactive
 
     # Dev tools
     abbr -a lg lazygit
-    abbr -a v nvim
+    abbr -a v nvim .
 end
